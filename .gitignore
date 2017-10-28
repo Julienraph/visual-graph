@@ -1,0 +1,13 @@
+compiled/
+
+# common backups, autosaves, lock files, OS meta-files
+*~
+\#*
+.#*
+.DS_Store
+*.bak
+TAGS
+*.swn
+*.swo
+*.swp
+
