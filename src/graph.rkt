@@ -22,8 +22,17 @@
 ; Probleme: Comment parcourir le graphe pour verifier
 ; l'existence d'un sommet specifique? 
 (define (add-edge! graph node-id1 node-id2)
-  (hash-set! graph node-id1 (list node-id2))
-  (hash-set! graph node-id2 (list node-id1)))
+  (hash-set! graph node-id1 (cons node-id2 empty))
+  (hash-set! graph node-id2 (cons node-id1 empty)))
+
+;;TODO
+(define (add-edge g n1 n2)
+  (cond
+    [(and (hash-has-key? g n1) (hash-has-key? g n2))(begin
+                                                      (hash-set! g n1 (cons (hash-ref g n1) n2))
+                                                      (hash-set! g n2 (cons (hash-ref g n2) n1)))]))
+    
+  
 
 ; Sommet de graph
 ; TODO: Le type de donné a renvoyer doit etre une liste
