@@ -6,45 +6,60 @@
 ;;; par liste adjacence.
 ;;; Pour le projet "Visualisation de graphe"
 
+;; TODO: 
 (provide (all-defined-out))
 
 ; Creation d'un graphe vide
 (define (empty-graph)
   (make-hash))
 
+
 ; Ajout d'un sommet node-id au graphe graph
 (define (add-node! graph node-id)
-  (hash-set! graph node-id '()))
+  (when (not (hash-has-key? graph node-id))
+    (hash-set! graph node-id (mutable-set))))
 
-; TODO: Verifier qu'il existe node-id1 et node-id2
-; S'il existe pas on cree les deux sommets avec une arete
-; Si l'arete existe deja on modifie pas le graphe
-; Probleme: Comment parcourir le graphe pour verifier
-; l'existence d'un sommet specifique? 
+; Ajout arete entre sommets node-id1 et node-id2
 (define (add-edge! graph node-id1 node-id2)
-  (hash-set! graph node-id1 (cons node-id2 empty))
-  (hash-set! graph node-id2 (cons node-id1 empty)))
-
-;;TODO
-(define (add-edge g n1 n2)
-  (cond
-    [(and (hash-has-key? g n1) (hash-has-key? g n2))(begin
-                                                      (hash-set! g n1 (cons (hash-ref g n1) n2))
-                                                      (hash-set! g n2 (cons (hash-ref g n2) n1)))]))
-    
+  (when (not (equal? node-id1 node-id2))
+    (add-node! graph node-id1)
+    (add-node! graph node-id2)
+    (set-add! (hash-ref graph node-id1) node-id2)
+    (set-add! (hash-ref graph node-id2) node-id1)))        
   
 
+  
 ; Sommet de graph
 ; TODO: Le type de donné a renvoyer doit etre une liste
 (define (get-nodes graph)
-  (for ([(k v)(in-hash graph)])
-    (printf "~a " k)))
+  (hash-keys graph))
 
 ; sommets voisins
-; ???
 (define (get-neighbors graph node-id)
   (hash-ref graph node-id))
 
+; suppression de node
+(define (rm-node! graph node-id)
+  (when (hash-has-key? graph node-id)
+    (hash-remove! graph node-id)
+    (for ([(k v)(in-hash graph)])
+      (when (set-member? (hash-ref graph k) node-id)
+        (set-remove! (hash-ref graph k) node-id)))))
+
+; suppression d'arete
+(define (rm-edge! graph node-id1 node-id2)
+  (when (and (hash-has-key? graph node-id1)(hash-has-key? graph node-id2))
+    (for ([(k v)(in-hash graph)])
+      (begin
+        (when (equal? k node-id1)
+          (set-remove! (hash-ref graph k) node-id2))
+        (when(equal? k node-id2)
+          (set-remove! (hash-ref graph k) node-id1))))))
+
+; TODO: liste adjacente?? 
+(define (print-graph graph)
+  (for ([(k v)(in-hash graph)])
+    (printf "~a : [ ~a ] \n" k v)))
 
 ; Variables de test
 
