@@ -52,21 +52,30 @@
         (when(equal? k node-id2)
           (set-remove! (hash-ref graph k) node-id1)))))
 
-; TODO: liste adjacente?? 
+;Affiche le graphe en montrant les listes d'adjacence
 (define (print-graph graph)
   (for ([(k v)(in-hash graph)])
-    (printf "~a : [ ~a ] \n" k v)))
+    (printf "~a : ~a \n" k (set->list v))))
 
 ; Application de f sur tous les nodes
 (define (iter-node f graph)
   (foldl f (get-nodes graph) '()))
 
-; TODO
+
 ; Aplication de f sur toutes les aretes
 (define (iter-edge f graph)
-  (printf "mdr"))
+  (for ([(k v)(in-hash graph)])
+   (f k v)))
 
 ; Variables de test
 
 (define g(empty-graph))
 (define v(empty-graph))
+
+
+(add-edge! g 'A 'G)
+(add-edge! g 'A 'C)
+
+(add-edge! g 'D 'G)
+(add-edge! g 'D 'S)
+
