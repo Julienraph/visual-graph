@@ -6,7 +6,7 @@
 ;;; par liste adjacence.
 ;;; Pour le projet "Visualisation de graphe"
 
-;; TODO: 
+
 (provide (all-defined-out))
 
 ; Creation d'un graphe vide
@@ -27,10 +27,7 @@
     (set-add! (hash-ref graph node-id1) node-id2)
     (set-add! (hash-ref graph node-id2) node-id1)))        
   
-
-  
 ; Sommet de graph
-; TODO: Le type de donné a renvoyer doit etre une liste
 (define (get-nodes graph)
   (hash-keys graph))
 
@@ -50,16 +47,24 @@
 (define (rm-edge! graph node-id1 node-id2)
   (when (and (hash-has-key? graph node-id1)(hash-has-key? graph node-id2))
     (for ([(k v)(in-hash graph)])
-      (begin
         (when (equal? k node-id1)
           (set-remove! (hash-ref graph k) node-id2))
         (when(equal? k node-id2)
-          (set-remove! (hash-ref graph k) node-id1))))))
+          (set-remove! (hash-ref graph k) node-id1)))))
 
 ; TODO: liste adjacente?? 
 (define (print-graph graph)
   (for ([(k v)(in-hash graph)])
     (printf "~a : [ ~a ] \n" k v)))
+
+; Application de f sur tous les nodes
+(define (iter-node f graph)
+  (foldl f (get-nodes graph) '()))
+
+; TODO
+; Aplication de f sur toutes les aretes
+(define (iter-edge f graph)
+  (printf "mdr"))
 
 ; Variables de test
 
