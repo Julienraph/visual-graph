@@ -15,7 +15,7 @@
 (define (random-positioning-of-node-list w h L)
   (let ([res-hash (make-hash)])
     (for-each (lambda (arg)
-                (apply-positioning res-hash arg (cons (random  h)(random  h))))L)res-hash))
+                (apply-positioning res-hash arg (cons (random  w)(random  h))))L)res-hash))
   
   
 (define (print-positioning id-list positioning)
