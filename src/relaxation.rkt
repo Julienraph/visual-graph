@@ -28,10 +28,10 @@
     ;; Force mecanique
     (define (force-m positioning node-id1 node-id2)
       (when (and (hash-has-key? positioning node-id1) (hash-has-key? positioning node-id2))
-        (let ([x (hash-ref node-id1)]
-              [y (hash-ref node-id2)])
-          (define u (vect-unit (vect-mult x y)))
-          (define d (sqr (vect-norm (vect-mult x y))))
+        (let ([vect1 (hash-ref node-id1)]
+              [vect2 (hash-ref node-id2)])
+          (define u (vect-unit (vect-sum (vect-scalar -1 vect1) vect2)))
+          (define d (sqr (vect-norm (vect-sum (vect-scalar -1 vect1) vect2))))
           (define k (* -1 (/ relax-c3 d)))
           (define res (vect-scalar k u))
           res)))
@@ -39,10 +39,10 @@
     ;; Force electrique
      (define (force-e positioning node-id1 node-id2)
       (when (and (hash-has-key? positioning node-id1) (hash-has-key? positioning node-id2))
-        (let ([x (hash-ref positioning node-id1)]
-              [y (hash-ref positioning node-id2)])
-          (define u (vect-unit (vect-mult x y)))
-         (define d (sqr (vect-norm (vect-mult x y))))
+        (let ([vect1 (hash-ref positioning node-id1)]
+              [vect2 (hash-ref positioning node-id2)])
+          (define u (vect-unit (vect-sum (vect-scalar -1 vect1) vect2)))
+         (define d (sqr (vect-norm (vect-sum (vect-scalar -1 vect1) vect2))))
          (define k (* -1(/ relax-c3 d)))
          (define res (vect-scalar k u))
          res)))
