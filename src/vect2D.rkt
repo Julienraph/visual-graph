@@ -22,6 +22,11 @@
   (make-vect (+ (coord-x v1) (coord-x v2))
              (+ (coord-y v1) (coord-y v2))))
 
+; Multiplication de deux vecteurs
+(define (vect-mult v1 v2)
+  (make-vect (* (coord-x v1) (coord-x v2))
+             (* (coord-y v1) (coord-y v2))))
+
 ; Somme de n vecteurs
 (define (vect-sum* . vn)
 (make-vect (apply + (map (lambda(vect)
