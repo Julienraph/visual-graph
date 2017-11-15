@@ -4,7 +4,7 @@
 ;;; Projet "Visualisation de graphe"
 (require "positioning.rkt" "vect2D.rkt" "graph.rkt")
 
-(provide all-defined-out)
+(provide (all-defined-out))
 
   
 ;Graphe à n sommet et n-1 arêtes formant une chaîne ouverte
