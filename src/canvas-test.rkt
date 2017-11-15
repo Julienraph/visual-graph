@@ -1,41 +1,50 @@
 #lang racket/gui
 
-(require "relaxation.rkt" "positioning.rkt" "vect2D.rkt")
+(require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt")
+
+(define RED-PEN (make-object pen% "red" 10 'solid))
+(define BLACK-PEN (make-object pen% "black" 1 'solid))
 
 (define FRAME (new frame% (label "test-canvas")))
-(define RED-PEN (make-object pen% "red" 3 'solid))
-(define PINK-PEN (make-object pen% "pink" 2 'solid))
 (define CANVAS (new canvas%
                     (parent FRAME)
-                    (min-width 50)
-                    (min-height 50)
+                    
+                    (min-width 500)
+                    (min-height 500)
+
+                    ; Dessin
                     (paint-callback
                      (lambda (obj evt)
                      (let ([dc (send obj get-dc)])
                        (send dc clear)
-                       (send dc set-pen RED-PEN)
-                       (send dc set-brush PINK-PEN)
-                       (send dc draw-point (coord-x (hash-ref e 'a)) (coord-y (hash-ref e 'a)))
-                       (send dc draw-point (coord-x (hash-ref e 'b)) (coord-y (hash-ref e 'b)))
-                       (send dc draw-line (coord-x (hash-ref e 'a)) (coord-y (hash-ref e 'a))
-                             (coord-x (hash-ref e 'b)) (coord-y (hash-ref e 'b))))))))
-(define BUTTON
-  (new button% (parent FRAME)(label "Go!")
-       (callback (lambda (obj evt) (send CANVAS on-paint)))))
+                       (for ([(k v) (in-hash e)])
+                         (for ((i (in-set (get-neighbors g k))))
+                           
+                           ; Associations de noeud
+                           (send dc set-pen BLACK-PEN)
+                           (send dc draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
+                           (coord-x v) (coord-y v))
+                           
+                           ; Noeuds
+                           (send dc set-pen RED-PEN)
+                           (send dc draw-point (coord-x v) (coord-y v)))))))))
+
                            
 
 
-; Fonction de placement
-(define e (positioning))
+; Creation d'un graphe avec un sommet A lie à (b c d e)
+(define g (empty-graph))
+(add-edge! g 'a 'b)
+(add-edge! g 'a 'c)
+(add-edge! g 'a 'd)
+(add-edge! g 'a 'e)
+;(add-edge! g 'e 'd)
 
-; Vecteur test 1
-(define t1 (make-vect 10 21))
-(define t2 (make-vect 20 11))
+;; Positions random a chaque noeud        
+(define e (random-positioning-of-node-list 500 500 (get-nodes g)))
 
-;; Test de placement
-(apply-positioning e 'a t1)
-(apply-positioning e 'b t2)
-
-
-
+                       
 (send FRAME show #t)
+
+
+
