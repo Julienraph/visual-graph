@@ -66,16 +66,3 @@
 (define (iter-edge f graph)
   (for ([(k v)(in-hash graph)])
    (f k v)))
-
-; Variables de test
-
-(define g(empty-graph))
-(define v(empty-graph))
-
-
-(add-edge! g 'A 'G)
-(add-edge! g 'A 'C)
-
-(add-edge! g 'D 'G)
-(add-edge! g 'D 'S)
-

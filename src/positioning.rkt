@@ -36,27 +36,3 @@
 (define (print-positioning id-list positioning)
   (for [(i id-list)]
      (printf "~a (~a, ~a) \n" i (car (hash-ref positioning i)) (car (cdr (hash-ref positioning i))))))
-
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;; TEST ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;; ZONE ;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; A-table ((1 (3 4) 2 (5 6))
-(define L (list (list 1 (list 3 4)) (list 2 (list 5 6))))
-
-; Liste de sommets
-(define n (list 1 2 3 4))
-
-; Fonction de placement
-(define e (positioning))
-
-; Vecteur test 1
-(define t1 (make-vect 3 2))
-
-;; Test de placement
-(apply-positioning e 'a t1)
-
-;; Creationg de vecteur test 2
-(define t2 (make-vect 7 8))
