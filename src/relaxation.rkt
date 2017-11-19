@@ -4,6 +4,7 @@
 ;;; Projet "Visualisation de graphe"
 
 (require "positioning.rkt" "vect2D.rkt" "graph.rkt")
+(provide (all-defined-out))
 
 (define (new-relaxator)
   ;; Definition des constantes c1, c2, c3 et
