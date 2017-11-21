@@ -2,92 +2,69 @@
 
 (require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt" 2htdp/image)
 
-(define RED-PEN (make-object pen% "red" 10 'solid))
+;; Constantes
+(define RED-PEN (make-object pen% "red" 8 'solid))
 (define BLACK-PEN (make-object pen% "black" 1 'solid))
-(define TIMER
-  (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
-(define pepe(bitmap "pepe.png"))
+(define WIDTH 500)
+(define HEIGHT 500)
+(define g (grid-graph 6 3))
+(define e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
+(define r (new-relaxator))
+(define animation #t)
 
-(define FRAME (new frame% (label "test-canvas")))
+;; Double buffer
+(define BITMAP (make-object bitmap% WIDTH HEIGHT))
+(define BITMAP-DC (new bitmap-dc% (bitmap BITMAP)))
+
+;; Horloge animation
+(define TIMER (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
+
+;; Definitions graphiques
+(define FRAME (new frame% (label "Visualisation graphique")))
 (define CANVAS (new canvas%
                     (parent FRAME)
                     
-                    (min-width 500)
-                    (min-height 500)
+                    (min-width WIDTH)
+                    (min-height HEIGHT)
 
                     ; Dessin
                     (paint-callback
                      (lambda (obj evt)
-                     (let ([dc (send obj get-dc)])
-                       (send dc clear)
-                       (for ([(k v) (in-hash e)])
-                         (for ((i (in-set (get-neighbors g k))))
-                           (send dc draw-text "Do you have time to talk" 150 5)
-                           (send dc draw-text "about our lord and savior" 150 25)
-                          (send dc draw-text "jesus christ ?" 150 45)
-                           ; Associations de noeud
-                           (send dc set-pen BLACK-PEN)
-                           (send dc draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
-                           (coord-x v) (coord-y v))
+                       (let ([dc (send obj get-dc)])
+                         (send BITMAP-DC clear)
+                         (send BITMAP-DC set-smoothing 'smoothed)
+                         (for ([(k v) (in-hash e)])
+                           (for ((i (in-set (get-neighbors g k))))
+                             
+                             ; Associations de noeud
+                             (send BITMAP-DC set-pen BLACK-PEN)
+                             (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
+                                   (coord-x v) (coord-y v))
                            
-                           ; Noeuds
-                           (send dc set-pen RED-PEN)
-                           (send dc draw-point (coord-x v) (coord-y v))
-                           (send dc draw-text (number->string k) (coord-x v) (coord-y v))))
-                       (r 'relax g e))))))
-                           
+                             ; Noeuds
+                             (send BITMAP-DC set-pen RED-PEN)
+                             (send BITMAP-DC draw-point (coord-x v) (coord-y v))
+                             (send dc draw-bitmap BITMAP 0 0 'solid)
+                             ))
+                         (r 'relax g e))))))
 
-
-; Creation d'un graphe avec un sommet A lie à (b c d e)
-(define g (grid-graph 6 3))
-
-;(define tempograph
- ; (append e empty))
-
-
-;; Positions random a chaque noeud        
-(define e (random-positioning-of-node-list 500 500 (get-nodes g)))
-(define r (new-relaxator))
-
-                       
-(send FRAME show #t)
-(send TIMER start 1)
-(send TIMER interval)
-
-(define animation
-  #t)
-
+;; Button pause/start
 (define PAUSE
   (new button%
-       (label "PAUSE")
+       (label "Pause")
        (parent FRAME)
        (style '(border))
        (callback
-          (lambda (obj evt)
-            (if (equal? animation #t)
-                    (begin (send TIMER stop)
-                    (set! animation #f))
-                (begin (send TIMER start 20)
-                       (set! animation #t)))))))
+        (lambda (obj evt)
+          (if (equal? animation #t)
+              (begin
+                (send TIMER stop)
+                (set! animation #f)
+                (send PAUSE set-label "Start"))
+              (begin
+                (send TIMER start 20)
+                (set! animation #t)
+                (send PAUSE set-label "Pause")))))))
 
-;(define REMBOBINER
- ; (new button%
-  ;     (label "REMBOBINER")
-   ;    (parent FRAME)
-    ;   (style '(border))
-     ;  (callback
-      ;  (lambda (obj evt)
-       ;   (for ([in-list tempograph])
-        ;    (set! tempograph (cdr tempograph)
-
-(define (fonction x)
-      (* (+ x 4) 4))
-
-    (define (inverse x)
-      (/ 1 (fonction x)))
-
-
-            
-
-
-            
+(send FRAME show #t)
+(send TIMER start 10)
