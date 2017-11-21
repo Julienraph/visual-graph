@@ -10,7 +10,7 @@
 (define g (grid-graph 6 3))
 (define e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
 (define r (new-relaxator))
-(define animation #t)
+(define animation #f)
 
 ;; Double buffer
 (define BITMAP (make-object bitmap% WIDTH HEIGHT))
@@ -35,6 +35,8 @@
                          (send BITMAP-DC set-smoothing 'smoothed)
                          (for ([(k v) (in-hash e)])
                            (for ((i (in-set (get-neighbors g k))))
+                             ;; TODO: Ajouter condition que verifie que la cle de e est une clé de g
+                             ;; Si on essaye de faire rm-node il y a erreur, voir issue #4
                              
                              ; Associations de noeud
                              (send BITMAP-DC set-pen BLACK-PEN)
@@ -51,7 +53,7 @@
 ;; Button pause/start
 (define PAUSE
   (new button%
-       (label "Pause")
+       (label "Start")
        (parent FRAME)
        (style '(border))
        (callback
@@ -65,6 +67,19 @@
                 (send TIMER start 20)
                 (set! animation #t)
                 (send PAUSE set-label "Pause")))))))
+(define n 10)
+(define FORWARD
+  (new button%
+       (label "faster")
+       (parent FRAME)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (if (> n 1)
+          (begin     
+            (set! n (- n 1))
+            (send TIMER start n))
+          (send FORWARD set-label "pls stop"))))))
 
 (send FRAME show #t)
-(send TIMER start 10)
+;(send TIMER start 10)
