@@ -1,6 +1,6 @@
 #lang racket/gui
 
-(require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt" 2htdp/image)
+(require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt")
 
 ;; Constantes
 (define RED-PEN (make-object pen% "red" 8 'solid))
@@ -19,36 +19,35 @@
 ;; Horloge animation
 (define TIMER (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
 
+;; Fonction qui dessine les sommets
+(define (dessiner-sommets g e)
+  (for ([(k v) (in-hash e)])
+    (when (hash-has-key? g k)
+      (send BITMAP-DC set-pen RED-PEN)
+      (send BITMAP-DC draw-point (coord-x v) (coord-y v)))))
+
+;; Fonction qui dessine les liens entre les sommets
+(define (dessiner-liens g e)
+  (for ([(k v) (in-hash e)])
+    (for ((i (in-set (get-neighbors g k))))
+      (when (hash-has-key? g k)
+        (send BITMAP-DC set-pen BLACK-PEN)
+        (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
+              (coord-x v) (coord-y v))))))
+
 ;; Definitions graphiques
 (define FRAME (new frame% (label "Visualisation graphique")))
 (define CANVAS (new canvas%
                     (parent FRAME)
-                    
                     (min-width WIDTH)
                     (min-height HEIGHT)
-
-                    ; Dessin
-                    (paint-callback
-                     (lambda (obj evt)
-                       (let ([dc (send obj get-dc)])
-                         (send BITMAP-DC clear)
-                         (send BITMAP-DC set-smoothing 'smoothed)
-                         (for ([(k v) (in-hash e)])
-                           (for ((i (in-set (get-neighbors g k))))
-                             ;; TODO: Ajouter condition que verifie que la cle de e est une clé de g
-                             ;; Si on essaye de faire rm-node il y a erreur, voir issue #4
-                             
-                             ; Associations de noeud
-                             (send BITMAP-DC set-pen BLACK-PEN)
-                             (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
-                                   (coord-x v) (coord-y v))
-                           
-                             ; Noeuds
-                             (send BITMAP-DC set-pen RED-PEN)
-                             (send BITMAP-DC draw-point (coord-x v) (coord-y v))
-                             (send dc draw-bitmap BITMAP 0 0 'solid)
-                             ))
-                         (r 'relax g e))))))
+                    (paint-callback (lambda (obj dc)
+                                      (send BITMAP-DC clear)
+                                      (send BITMAP-DC set-smoothing 'smoothed)
+                                      (dessiner-liens g e)
+                                      (dessiner-sommets g e)
+                                      (send dc draw-bitmap BITMAP 0 0 'solid)
+                                      (r 'relax g e)))))
 
 ;; Button pause/start
 (define PAUSE
@@ -67,19 +66,5 @@
                 (send TIMER start 20)
                 (set! animation #t)
                 (send PAUSE set-label "Pause")))))))
-(define n 10)
-(define FORWARD
-  (new button%
-       (label "faster")
-       (parent FRAME)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (if (> n 1)
-          (begin     
-            (set! n (- n 1))
-            (send TIMER start n))
-          (send FORWARD set-label "pls stop"))))))
 
 (send FRAME show #t)
-;(send TIMER start 10)
