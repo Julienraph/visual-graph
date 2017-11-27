@@ -37,23 +37,33 @@
 
 ;; Definitions graphiques
 (define FRAME (new frame% (label "Visualisation graphique")))
-(define CANVAS (new canvas%
-                    (parent FRAME)
-                    (min-width WIDTH)
-                    (min-height HEIGHT)
-                    (paint-callback (lambda (obj dc)
-                                      (send BITMAP-DC clear)
-                                      (send BITMAP-DC set-smoothing 'smoothed)
-                                      (dessiner-liens g e)
-                                      (dessiner-sommets g e)
-                                      (send dc draw-bitmap BITMAP 0 0 'solid)
-                                      (r 'relax g e)))))
+(define HPANEL
+  (new horizontal-panel%
+  (parent FRAME)))
+
+(define HHPANEL
+  (new horizontal-panel%
+       (parent FRAME)))
+
+(define horizontal-canvas
+  (new horizontal-panel%
+       (parent FRAME)))
+
+(define VPANEL
+  (new vertical-panel%
+       (parent HPANEL)))
+
+
 
 ;; Button pause/start
+
+(define hpanel2
+  (new horizontal-panel%
+       [parent VPANEL]))
 (define PAUSE
   (new button%
        (label "Start")
-       (parent FRAME)
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
@@ -71,8 +81,9 @@
   (let ([listekeys (hash-keys e)]
         [aleatoire 1])
   (new button%
-       (label "remove")
-       (parent FRAME)
+       (label "Enlever sommet")
+       (parent hpanel2)
+       ;(min-width 200)
        (style '(border))
        (callback
         (lambda (obj evt)
@@ -80,8 +91,81 @@
           (set! aleatoire (list-ref listekeys (random (length listekeys))))
           (set! listekeys (remove aleatoire listekeys))
           (rm-node! g aleatoire)
-          (hash-remove! e aleatoire)
-          (send TIMER start 20)))))))
+          (hash-remove! e aleatoire)))))))
 
+(define CANVAS (new canvas%
+                    (parent VPANEL)
+                    (min-width WIDTH)
+                    (min-height HEIGHT)
+                    (paint-callback (lambda (obj dc)
+                                      (send BITMAP-DC clear)
+                                      (send BITMAP-DC set-smoothing 'smoothed)
+                                      (dessiner-liens g e)
+                                      (dessiner-sommets g e)
+                                      (send dc draw-bitmap BITMAP 0 0 'solid)
+                                      (r 'relax g e)))))
+(define OPTIONS
+  (new dialog%
+       (label "options")
+       (width 200)
+       (height 200)))
+
+(define vpanel2
+  (new vertical-panel%
+       (parent HPANEL)))
+
+(define slider-c1
+  (new slider%
+       (parent OPTIONS)
+       (label "C1")
+       (style '(vertical))
+       (min-value 1)
+       (max-value 60)
+       (init-value (r 'get-c1))))
+
+(define slider-c2
+  (new slider%
+       (parent OPTIONS)
+       (label "C2")
+       (style '(vertical))
+       (min-value 5)
+       (max-value 60)
+       (init-value (r 'get-c2))))
+       
+(define inshallah
+  (new button%
+       (label "test")
+       (parent OPTIONS)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (r 'set-c1 (send slider-c1 get-value))
+          (r 'set-c2 (send slider-c2 get-value))
+          (r 'set-c3 (sqr (send slider-c2 get-value)))
+          (send OPTIONS show #f)))))
 (send FRAME show #t)
+
+
+
+(define opt-button
+  (new button%
+       (label "Options")
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (send OPTIONS show #t)))))
+
+
+
+
+       
+       
+
+
+
+
+
+          
+
 
