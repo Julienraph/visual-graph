@@ -67,4 +67,21 @@
                 (set! animation #t)
                 (send PAUSE set-label "Pause")))))))
 
+(define REMOVE
+  (let ([listekeys (hash-keys e)]
+        [aleatoire 1])
+  (new button%
+       (label "remove")
+       (parent FRAME)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (when (not (empty? listekeys))
+          (set! aleatoire (list-ref listekeys (random (length listekeys))))
+          (set! listekeys (remove aleatoire listekeys))
+          (rm-node! g aleatoire)
+          (hash-remove! e aleatoire)
+          (send TIMER start 20)))))))
+
 (send FRAME show #t)
+
