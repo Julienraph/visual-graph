@@ -19,6 +19,7 @@
 ;; Horloge animation
 (define TIMER (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
 
+
 ;; Fonction qui dessine les sommets
 (define (dessiner-sommets g e)
   (for ([(k v) (in-hash e)])
@@ -35,25 +36,19 @@
         (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
               (coord-x v) (coord-y v))))))
 
-;; Definitions graphiques
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;Definitions graphiques ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define FRAME (new frame% (label "Visualisation graphique")))
+
 (define HPANEL
-  (new horizontal-panel%
-  (parent FRAME)))
-
-(define HHPANEL
-  (new horizontal-panel%
-       (parent FRAME)))
-
-(define horizontal-canvas
   (new horizontal-panel%
        (parent FRAME)))
 
 (define VPANEL
   (new vertical-panel%
        (parent HPANEL)))
-
-
 
 ;; Button pause/start
 
@@ -80,19 +75,21 @@
 (define REMOVE
   (let ([listekeys (hash-keys e)]
         [aleatoire 1])
-  (new button%
-       (label "Enlever sommet")
-       (parent hpanel2)
-       ;(min-width 200)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (when (not (empty? listekeys))
-          (set! aleatoire (list-ref listekeys (random (length listekeys))))
-          (set! listekeys (remove aleatoire listekeys))
-          (rm-node! g aleatoire)
-          (hash-remove! e aleatoire)))))))
+    (new button%
+         (label "Enlever sommet")
+         (parent hpanel2)
+         ;(min-width 200)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (when (not (empty? listekeys))
+              (set! aleatoire (list-ref listekeys (random (length listekeys))))
+              (set! listekeys (remove aleatoire listekeys))
+              (rm-node! g aleatoire)
+              (hash-remove! e aleatoire)))))))
 
+
+;; Dessin du graphique
 (define CANVAS (new canvas%
                     (parent VPANEL)
                     (min-width WIDTH)
@@ -104,68 +101,41 @@
                                       (dessiner-sommets g e)
                                       (send dc draw-bitmap BITMAP 0 0 'solid)
                                       (r 'relax g e)))))
-(define OPTIONS
+
+;; Fenetre choix: Nouveau graphique ou importer
+(define START-DIALOG
   (new dialog%
-       (label "options")
-       (width 200)
-       (height 200)))
+       (label "Visualisation graphique")
+       (width 300)
+       (height 100)))
 
-(define vpanel2
-  (new vertical-panel%
-       (parent HPANEL)))
+;; Panel pour organiser les buttons
+(define START-DIALOG-PANEL (new horizontal-panel%
+                                [parent START-DIALOG]
+                                [alignment '(center center)]))
 
-(define slider-c1
-  (new slider%
-       (parent OPTIONS)
-       (label "C1")
-       (style '(vertical))
-       (min-value 1)
-       (max-value 60)
-       (init-value (r 'get-c1))))
-
-(define slider-c2
-  (new slider%
-       (parent OPTIONS)
-       (label "C2")
-       (style '(vertical))
-       (min-value 5)
-       (max-value 60)
-       (init-value (r 'get-c2))))
-       
-(define inshallah
+;; Button de creation de graphe
+(define new-graph-button
   (new button%
-       (label "test")
-       (parent OPTIONS)
-       (style '(border))
+       [parent START-DIALOG-PANEL]
+       [label "Nouveau graphique"]
        (callback
         (lambda (obj evt)
-          (r 'set-c1 (send slider-c1 get-value))
-          (r 'set-c2 (send slider-c2 get-value))
-          (r 'set-c3 (sqr (send slider-c2 get-value)))
-          (send OPTIONS show #f)))))
-(send FRAME show #t)
+          (send FRAME show #t)
+          (send START-DIALOG show #f)))))
 
 
-
-(define opt-button
+;; Button d'importation de graphique
+(define import-graph-button
   (new button%
-       (label "Options")
-       (parent hpanel2)
-       (style '(border))
-       (callback
+       [parent START-DIALOG-PANEL]
+       [label "Importer graphique"]
+       [callback
         (lambda (obj evt)
-          (send OPTIONS show #t)))))
+          (define imported-file
+            (get-file "Importer graphique" #f #f #f #f null '(("Any" "*.gv"))))
+          (printf "~a" imported-file)
+          (send START-DIALOG show #f))]))
 
 
-
-
-       
-       
-
-
-
-
-
-          
-
-
+(send START-DIALOG show #t)
