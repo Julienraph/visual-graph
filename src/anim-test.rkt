@@ -2,15 +2,19 @@
 
 (require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt")
 
-;; Constantes
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CONSTANTES ;;;;;;;;;;;;;;;;;;;;;
+
 (define RED-PEN (make-object pen% "red" 8 'solid))
 (define BLACK-PEN (make-object pen% "black" 1 'solid))
 (define WIDTH 500)
 (define HEIGHT 500)
-(define g (grid-graph 6 3))
+(define g (empty-graph))
 (define e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
 (define r (new-relaxator))
 (define animation #f)
+(define dot-regex "[a-zA-Z]|[0-9]->[a-zA-Z]|[0-9]")
 
 ;; Double buffer
 (define BITMAP (make-object bitmap% WIDTH HEIGHT))
@@ -19,6 +23,8 @@
 ;; Horloge animation
 (define TIMER (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DEFINITIONS PRATIQUES ;;;;;;;;;;;
 
 ;; Fonction qui dessine les sommets
 (define (dessiner-sommets g e)
@@ -36,9 +42,42 @@
         (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
               (coord-x v) (coord-y v))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;Definitions graphiques ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Conversion de fichier DOT a liste adjacente
+(define (dot->list file)
+  (call-with-input-file file
+    (lambda (p-in)
+      (let ([res-graph (empty-graph)])
+      (do ((ligne (read-line p-in)(read-line p-in)))
+        ((eof-object? ligne)(void))
+        (when (regexp-match dot-regex ligne)
+          (add-edge! res-graph (first (string->list ligne)) (sixth (string->list ligne)))))res-graph))))
+
+;; Conversion de liste adjacente a fichier DOT
+(define (list->dot L file-name)
+  (call-with-output-file (string-append file-name ".dot")
+    (lambda (p-out)
+      (define (imprimer arc)
+        (fprintf p-out "~a -> ~a ;/n" (car arc)(cadr arc)))
+      (fprintf p-out "diagraph G {\n")
+      (for-each imprimer L)
+      (fprintf p-out "}\n"))
+    #:exists 'replace))
+
+;; Conversion de graphique en liste adjacente
+(define (graph->list graph)
+  (let ([res (null)])
+    (for ([(k v) (in-hash graph)])
+      (set! res (cons (cons k (set->list v))(cdr res))))))
+  
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DEFINITIONS GRAPHIQUES ;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; FRAMES ;;;;;;;;;;;;;;;;;;;;;
 
 (define FRAME (new frame% (label "Visualisation graphique")))
 
@@ -50,27 +89,94 @@
   (new vertical-panel%
        (parent HPANEL)))
 
-;; Button pause/start
-
 (define hpanel2
   (new horizontal-panel%
        [parent VPANEL]))
-(define PAUSE
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; CANVAS ;;;;;;;;;;;;;;;;;;;;;
+
+;; Dessin du graphique
+(define CANVAS (new canvas%
+                    (parent VPANEL)
+                    (min-width WIDTH)
+                    (min-height HEIGHT)
+                    (paint-callback (lambda (obj dc)
+                                      (send BITMAP-DC clear)
+                                      (send BITMAP-DC set-smoothing 'smoothed)
+                                      (dessiner-liens g e)
+                                      (dessiner-sommets g e)
+                                      (send dc draw-bitmap BITMAP 0 0 'solid)
+                                      (r 'relax g e)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; DIALOGS ;;;;;;;;;;;;;;;;;;;;
+
+;; Fenetre choix: Nouveau graphique ou importer
+(define START-DIALOG
+  (new dialog%
+       (label "Visualisation graphique")
+       (width 300)
+       (height 100)))
+
+;; Panel pour organiser les buttons de START-DIALOG
+(define START-DIALOG-PANEL (new horizontal-panel%
+                                [parent START-DIALOG]
+                                [alignment '(center center)]))
+
+;; Fenetre de creation de graphe
+(define NEW-GRAPH-DIALOG
+  (new dialog%
+       (label "Création de graphe")
+       (width 250)
+       (height 200)))
+
+(define NEW-GRAPH-DIALOG-HPANEL (new horizontal-panel%
+                                [parent NEW-GRAPH-DIALOG]
+                                [alignment '(center center)]))
+
+(define NEW-GRAPH-DIALOG-VPANEL (new vertical-panel%
+                                [parent NEW-GRAPH-DIALOG-HPANEL]
+                                [alignment '(center center)]))
+
+(define NEW-GRAPH-CHOICE
+  (new choice%
+       (label "Type graph: ")
+       (parent NEW-GRAPH-DIALOG-VPANEL)
+       (choices
+        (list "" "Chain" "Cylic" "Complete Tree" "Grid" "Clique"))))
+
+(define NEW-GRAPH-TEXT
+  (new text-field%
+       (label "Nombre de sommets: ")
+       (parent NEW-GRAPH-DIALOG-VPANEL)
+       (init-value "0")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; BUTTONS ;;;;;;;;;;;;;;;;;;;;
+
+(define NEW-GRAPH-DIALOG-BUTTON
   (new button%
-       (label "Start")
-       (parent hpanel2)
-       (style '(border))
+       (label "Accepter")
+       (parent NEW-GRAPH-DIALOG-VPANEL)
        (callback
         (lambda (obj evt)
-          (if (equal? animation #t)
-              (begin
-                (send TIMER stop)
-                (set! animation #f)
-                (send PAUSE set-label "Start"))
-              (begin
-                (send TIMER start 20)
-                (set! animation #t)
-                (send PAUSE set-label "Pause")))))))
+          (let ([type-graph (send NEW-GRAPH-CHOICE get-string-selection)]
+                [nombre-sommets (string->number(send NEW-GRAPH-TEXT get-value))])
+            (cond
+              [(equal? type-graph "Chain") (set! g (chain-graph nombre-sommets))]
+              [(equal? type-graph "Cylic") (set! g (cyclic-graph nombre-sommets))]
+              [(equal? type-graph "Complete Tree") (set! g (chain-graph nombre-sommets 2))] ; (?)
+              [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))] ; lol
+              [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
+              [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
+            (when (not (equal? type-graph (empty-graph)))
+              (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
+              (send FRAME show #t)
+              (send NEW-GRAPH-DIALOG show #f)))))))
+
 
 (define REMOVE
   (let ([listekeys (hash-keys e)]
@@ -88,31 +194,22 @@
               (rm-node! g aleatoire)
               (hash-remove! e aleatoire)))))))
 
-
-;; Dessin du graphique
-(define CANVAS (new canvas%
-                    (parent VPANEL)
-                    (min-width WIDTH)
-                    (min-height HEIGHT)
-                    (paint-callback (lambda (obj dc)
-                                      (send BITMAP-DC clear)
-                                      (send BITMAP-DC set-smoothing 'smoothed)
-                                      (dessiner-liens g e)
-                                      (dessiner-sommets g e)
-                                      (send dc draw-bitmap BITMAP 0 0 'solid)
-                                      (r 'relax g e)))))
-
-;; Fenetre choix: Nouveau graphique ou importer
-(define START-DIALOG
-  (new dialog%
-       (label "Visualisation graphique")
-       (width 300)
-       (height 100)))
-
-;; Panel pour organiser les buttons
-(define START-DIALOG-PANEL (new horizontal-panel%
-                                [parent START-DIALOG]
-                                [alignment '(center center)]))
+(define PAUSE
+  (new button%
+       (label "Start")
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (if (equal? animation #t)
+              (begin
+                (send TIMER stop)
+                (set! animation #f)
+                (send PAUSE set-label "Start"))
+              (begin
+                (send TIMER start 20)
+                (set! animation #t)
+                (send PAUSE set-label "Pause")))))))
 
 ;; Button de creation de graphe
 (define new-graph-button
@@ -121,11 +218,11 @@
        [label "Nouveau graphique"]
        (callback
         (lambda (obj evt)
-          (send FRAME show #t)
+          (send NEW-GRAPH-DIALOG show #t)
           (send START-DIALOG show #f)))))
 
 
-;; Button d'importation de graphique
+;; Button d'importation de fichier dot
 (define import-graph-button
   (new button%
        [parent START-DIALOG-PANEL]
@@ -133,8 +230,10 @@
        [callback
         (lambda (obj evt)
           (define imported-file
-            (get-file "Importer graphique" #f #f #f #f null '(("Any" "*.gv"))))
-          (printf "~a" imported-file)
+            (get-file "Importer graphique" #f #f #f #f null '(("Any" "*.dot"))))
+          (set! g (dot->list imported-file))
+          (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
+          (send FRAME show #t)
           (send START-DIALOG show #f))]))
 
 
