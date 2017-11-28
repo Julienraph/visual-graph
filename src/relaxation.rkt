@@ -64,22 +64,3 @@
           (define res (vect-scalar k u))
           res))) 
     this))
-
-;; VARIABLES DE TEST
-
-(define g (empty-graph))
-(add-edge! g 'a 'b)
-
-; Fonction de placement
-(define e (positioning))
-
-; Vecteur test 
-(define t1 (make-vect 3 2))
-(define t2 (make-vect 4 1))
-
-;; Test de placement
-(apply-positioning e 'a t1)
-(apply-positioning e 'b t2)
-
-;; Test object relaxator
-(define my-relaxator (new-relaxator))
