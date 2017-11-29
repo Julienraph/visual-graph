@@ -41,18 +41,18 @@
 (define (dessiner-sommets g e)
   (for ([(k v) (in-hash e)])
     
-      (send BITMAP-DC set-pen RED-PEN)
-      (send BITMAP-DC draw-point (coord-x v) (coord-y v))))
+    (send BITMAP-DC set-pen RED-PEN)
+    (send BITMAP-DC draw-point (coord-x v) (coord-y v))))
 
 ;; Fonction qui dessine les liens entre les sommets
 (define (dessiner-liens g e)
   (for ([(k v) (in-hash e)])
     (when (hash-has-key? g k)
-    (for ((i (in-set (get-neighbors g k))))
-      (when (hash-has-key? g k)
-        (send BITMAP-DC set-pen BLACK-PEN)
-        (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
-              (coord-x v) (coord-y v)))))))
+      (for ((i (in-set (get-neighbors g k))))
+        (when (hash-has-key? g k)
+          (send BITMAP-DC set-pen BLACK-PEN)
+          (send BITMAP-DC draw-line (coord-x (hash-ref e i)) (coord-y (hash-ref e i))
+                (coord-x v) (coord-y v)))))))
 
 ;; Conversion de fichier DOT a liste adjacente
 (define (dot->list file)
@@ -108,7 +108,6 @@
 ;;;;;;;;;;;;;;;;;; CANVAS ;;;;;;;;;;;;;;;;;;;;;
 
 ;; Dessin du graphique
-
 (define CANVAS (new canvas%
                     (parent VPANEL)
                     (min-width WIDTH)
@@ -189,21 +188,7 @@
               (send NEW-GRAPH-DIALOG show #f)))))))
 
 
-(define REMOVE
-  (let ([listekeys (hash-keys e)]
-        [aleatoire 1])
-    (new button%
-         (label "Enlever sommet")
-         (parent hpanel2)
-         ;(min-width 200)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (when (not (empty? listekeys))
-              (set! aleatoire (list-ref listekeys (random (length listekeys))))
-              (set! listekeys (remove aleatoire listekeys))
-              (rm-node! g aleatoire)
-              (hash-remove! e aleatoire)))))))
+
 
 (define PAUSE
   (new button%
@@ -224,19 +209,19 @@
 
 
 
-(define REMOVESommet
+(define SUPPRESSION-SOMMET-BUTTON
   (let ([SommetAlea 0])
-  (new button%
-       (label "RemoveSommet")
-       (parent HPANEL)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (when (not (equal? (hash-count g) 0))
-           (begin (set! SommetAlea (random-ref (hash-keys e)))
-          (rm-node! g SommetAlea)
-          (hash-remove! e SommetAlea)
-          (send CANVAS on-paint))))))))
+    (new button%
+         (label "Enlever sommet")
+         (parent HPANEL)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (when (not (equal? (hash-count g) 0))
+              (begin (set! SommetAlea (random-ref (hash-keys e)))
+                     (rm-node! g SommetAlea)
+                     (hash-remove! e SommetAlea)
+                     (send CANVAS on-paint))))))))
           
   
 
@@ -298,22 +283,22 @@
         [IsFilter empty]
                                    
         [voisin 0])   ;Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
-  (new button%
-       (label "AddArrete")
-       (parent HPANEL)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (set! Sommet (hash-keys g))
-          (set! IsFilter (filter (lambda (x) (not (equal? (- (hash-count g) 1) (length (set->list (hash-ref g x)))))) (hash-keys g)))
-          (when (not (equal? IsFilter empty))
-          (set! SommetAlea (random-ref IsFilter))
-          (set! voisin (set->list (hash-ref g SommetAlea)))
-            (for ((i (in-list voisin)))
-              (set! Sommet (remove i Sommet)))
-          (set! Sommet (remove SommetAlea Sommet))
-          (add-edge! g SommetAlea (random-ref Sommet))
-            (send CANVAS on-paint)))))))
+    (new button%
+         (label "AddArrete")
+         (parent HPANEL)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (set! Sommet (hash-keys g))
+            (set! IsFilter (filter (lambda (x) (not (equal? (- (hash-count g) 1) (length (set->list (hash-ref g x)))))) (hash-keys g)))
+            (when (not (equal? IsFilter empty))
+              (set! SommetAlea (random-ref IsFilter))
+              (set! voisin (set->list (hash-ref g SommetAlea)))
+              (for ((i (in-list voisin)))
+                (set! Sommet (remove i Sommet)))
+              (set! Sommet (remove SommetAlea Sommet))
+              (add-edge! g SommetAlea (random-ref Sommet))
+              (send CANVAS on-paint)))))))
 
 (define AddSommet
   (new button%
@@ -322,17 +307,17 @@
        (style '(border))
        (callback
         (lambda (obj evt)
-  (let ([Sommet (hash-keys g)]
-        [maximum 0])
+          (let ([Sommet (hash-keys g)]
+                [maximum 0])
     
-  (set! Sommet (hash-keys g))
-  (if (> (length Sommet) 0)
-      (begin (set! maximum (apply max Sommet))
-             (add-node! g (+ maximum 1))
-             (hash-set! e (+ maximum 1) (make-vect (random WIDTH) (random HEIGHT))))
-       (begin (add-node! g 0)
-              (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
-    (send CANVAS on-paint))))))
+            (set! Sommet (hash-keys g))
+            (if (> (length Sommet) 0)
+                (begin (set! maximum (apply max Sommet))
+                       (add-node! g (+ maximum 1))
+                       (hash-set! e (+ maximum 1) (make-vect (random WIDTH) (random HEIGHT))))
+                (begin (add-node! g 0)
+                       (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
+            (send CANVAS on-paint))))))
           
           
 
@@ -348,19 +333,19 @@
         [ArreteAlea 0]
         [IsFilter empty]
         )
-  (new button%
-       (label "removearr")
-       (parent HPANEL)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (set! IsFilter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
-          (when (not (equal? IsFilter empty))
-          ;tester si il y a au moins un sommet qui a un voisin
-          (set! SommetAlea (random-ref  IsFilter))
-         (set! ArreteAlea (random-ref (set->list (hash-ref g SommetAlea))))
-          (rm-edge! g SommetAlea ArreteAlea)
-            (send CANVAS on-paint)))))))
+    (new button%
+         (label "removearr")
+         (parent HPANEL)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (set! IsFilter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
+            (when (not (equal? IsFilter empty))
+              ;tester si il y a au moins un sommet qui a un voisin
+              (set! SommetAlea (random-ref  IsFilter))
+              (set! ArreteAlea (random-ref (set->list (hash-ref g SommetAlea))))
+              (rm-edge! g SommetAlea ArreteAlea)
+              (send CANVAS on-paint)))))))
 
 (define zoom
   (new button%
@@ -370,8 +355,8 @@
        (callback
         (lambda (obj evt)
           (send BITMAP-DC scale 1.5 1.5)
-        ))))
-          ;jpp
+          ))))
+;jpp
          
          
 
@@ -418,7 +403,7 @@
        (callback
         (lambda (obj evt)
           (let ((n (string->number (send modifier get-value))))
-                 (r 'set-c1 n))))))
+            (r 'set-c1 n))))))
 
 
 
