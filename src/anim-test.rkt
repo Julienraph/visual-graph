@@ -47,14 +47,14 @@
   (call-with-input-file file
     (lambda (p-in)
       (let ([res-graph (empty-graph)])
-      (do ((ligne (read-line p-in)(read-line p-in)))
-        ((eof-object? ligne)(void))
-        (when (regexp-match dot-regex ligne)
-          (add-edge! res-graph (first (string->list ligne)) (sixth (string->list ligne)))))res-graph))))
+        (do ((ligne (read-line p-in)(read-line p-in)))
+          ((eof-object? ligne)(void))
+          (when (regexp-match dot-regex ligne)
+            (add-edge! res-graph (first (string->list ligne)) (sixth (string->list ligne)))))res-graph))))
 
 ;; Conversion de liste adjacente a fichier DOT
 (define (list->dot L file-name)
-  (call-with-output-file (string-append file-name ".dot")
+  (call-with-output-file file-name
     (lambda (p-out)
       (define (imprimer arc)
         (fprintf p-out "~a -> ~a ;/n" (car arc)(cadr arc)))
@@ -63,11 +63,13 @@
       (fprintf p-out "}\n"))
     #:exists 'replace))
 
-;; Conversion de graphique en liste adjacente
+; Conversion de graphique en liste adjacente
 (define (graph->list graph)
-  (let ([res (null)])
+  (let ([res null])
     (for ([(k v) (in-hash graph)])
-      (set! res (cons (cons k (set->list v))(cdr res))))))
+      (set! res (append res (list k (set->list v)))))res))
+
+
   
 
 
@@ -134,12 +136,12 @@
        (height 200)))
 
 (define NEW-GRAPH-DIALOG-HPANEL (new horizontal-panel%
-                                [parent NEW-GRAPH-DIALOG]
-                                [alignment '(center center)]))
+                                     [parent NEW-GRAPH-DIALOG]
+                                     [alignment '(center center)]))
 
 (define NEW-GRAPH-DIALOG-VPANEL (new vertical-panel%
-                                [parent NEW-GRAPH-DIALOG-HPANEL]
-                                [alignment '(center center)]))
+                                     [parent NEW-GRAPH-DIALOG-HPANEL]
+                                     [alignment '(center center)]))
 
 (define NEW-GRAPH-CHOICE
   (new choice%
@@ -168,7 +170,7 @@
             (cond
               [(equal? type-graph "Chain") (set! g (chain-graph nombre-sommets))]
               [(equal? type-graph "Cylic") (set! g (cyclic-graph nombre-sommets))]
-              [(equal? type-graph "Complete Tree") (set! g (chain-graph nombre-sommets 2))] ; (?)
+              [(equal? type-graph "Complete Tree") (set! g (complete-tree-graph nombre-sommets 2))] ; (?)
               [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))] ; lol
               [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
               [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
@@ -211,6 +213,17 @@
                 (set! animation #t)
                 (send PAUSE set-label "Pause")))))))
 
+;; Button modification de graphe
+(define MODIFY
+  (new button%
+       (label "Modifier")
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (send NEW-GRAPH-DIALOG show #t)
+          (send NEW-GRAPH-DIALOG-VPANEL set-label "Modification de graphe")))))
+
 ;; Button de creation de graphe
 (define new-graph-button
   (new button%
@@ -235,6 +248,19 @@
           (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
           (send FRAME show #t)
           (send START-DIALOG show #f))]))
+
+;; Button sauvegarde de graphe
+(define SAVE-BUTTON
+  (new button%
+       (parent hpanel2)
+       (label "Sauvegarder")
+       (style'(border))
+       (callback
+        (lambda (obj evt)
+          (let([file-path (put-file)]
+               [res-list (hash->list g)])
+            
+            (list->dot res-list file-path))))))
 
 
 (send START-DIALOG show #t)
