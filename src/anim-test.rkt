@@ -82,8 +82,8 @@
       (set! res (append res (list(list k (set->list v))))))res))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DEFINITIONS GRAPHIQUES ;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DEFINITIONS GRAPHIQUES ;;;;;;;;;;;;;;;;;;;;;
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -151,6 +151,7 @@
                                      [parent NEW-GRAPH-DIALOG-HPANEL]
                                      [alignment '(center center)]))
 
+;; Objet graphique de type choice qui permet de choisir les graphiques à disposition
 (define NEW-GRAPH-CHOICE
   (new choice%
        (label "Type graph: ")
@@ -158,6 +159,7 @@
        (choices
         (list "" "Chain" "Cylic" "Complete Tree" "Grid" "Clique"))))
 
+;; Objet graphique de type text-field qui permet de stocker le nombre de sommets choisis par l'utilisateur
 (define NEW-GRAPH-TEXT
   (new text-field%
        (label "Nombre de sommets: ")
@@ -167,6 +169,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; BUTTONS ;;;;;;;;;;;;;;;;;;;;
 
+;; Création de graphique a partir des données entrées par l'utilisateur
 (define NEW-GRAPH-DIALOG-BUTTON
   (new button%
        (label "Accepter")
@@ -178,8 +181,8 @@
             (cond
               [(equal? type-graph "Chain") (set! g (chain-graph nombre-sommets))]
               [(equal? type-graph "Cylic") (set! g (cyclic-graph nombre-sommets))]
-              [(equal? type-graph "Complete Tree") (set! g (complete-tree-graph nombre-sommets 2))] ; (?)
-              [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))] ; lol
+              [(equal? type-graph "Complete Tree") (set! g (complete-tree-graph nombre-sommets 2))]
+              [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))]
               [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
               [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
             (when (not (equal? type-graph (empty-graph)))
@@ -189,8 +192,8 @@
 
 
 
-
-(define PAUSE
+;; Mise en pause de l'animation en cours
+(define PAUSE-ANIMATION-BUTTON
   (new button%
        (label "Start")
        (parent hpanel2)
@@ -201,19 +204,19 @@
               (begin
                 (send TIMER stop)
                 (set! animation #f)
-                (send PAUSE set-label play))
+                (send PAUSE-ANIMATION-BUTTON set-label play))
               (begin
                 (send TIMER start 20)
                 (set! animation #t)
-                (send PAUSE set-label pause)))))))
+                (send PAUSE-ANIMATION-BUTTON set-label pause)))))))
 
 
-
+;; Suppression d'un sommet aleatoire de l'animation en cours
 (define SUPPRESSION-SOMMET-BUTTON
   (let ([SommetAlea 0])
     (new button%
          (label "Enlever sommet")
-         (parent HPANEL)
+         (parent hpanel2)
          (style '(border))
          (callback
           (lambda (obj evt)
@@ -222,13 +225,10 @@
                      (rm-node! g SommetAlea)
                      (hash-remove! e SommetAlea)
                      (send CANVAS on-paint))))))))
-          
-  
 
-;enlever le bouton quand length=1
 
-;; Button modification de graphe
-(define MODIFY
+;; Modification du graphique
+(define MODIFY-GRAPH-BUTTON
   (new button%
        (label "Modifier")
        (parent hpanel2)
@@ -238,8 +238,9 @@
           (send NEW-GRAPH-DIALOG show #t)
           (send NEW-GRAPH-DIALOG-VPANEL set-label "Modification de graphe")))))
 
-;; Button de creation de graphe
-(define new-graph-button
+
+;; Button qui renvoie l'utilisateur vers une fenetre de création 
+(define NEW-GRAPH-BUTTON
   (new button%
        [parent START-DIALOG-PANEL]
        [label "Nouveau graphique"]
@@ -250,7 +251,7 @@
 
 
 ;; Button d'importation de fichier dot
-(define import-graph-button
+(define IMPORT-GRAPH-BUTTON
   (new button%
        [parent START-DIALOG-PANEL]
        [label "Importer graphique"]
@@ -263,8 +264,9 @@
           (send FRAME show #t)
           (send START-DIALOG show #f))]))
 
-;; Button sauvegarde de graphe
-(define SAVE-BUTTON
+
+;; Button sauvegarde de graphe sur emplacement choisis par l'utilisateur
+(define SAVE-GRAPH-BUTTON
   (new button%
        (parent hpanel2)
        (label "Sauvegarder")
@@ -273,19 +275,18 @@
         (lambda (obj evt)
           (let([file-path (put-file)]
                [res-list (graph->list g)])
-            
             (list->dot res-list file-path))))))
 
 
-(define AddArrete
+;; Ajout d'arete entre deux sommets aléatoires
+(define AJOUTER-ARETE-BUTTON
   (let ([Sommet empty]
         [SommetAlea empty]
-        [IsFilter empty]
-                                   
-        [voisin 0])   ;Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
+        [IsFilter empty]                                  
+        [voisin 0])   ;; TODO: Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
     (new button%
-         (label "AddArrete")
-         (parent HPANEL)
+         (label "Ajouter arête")
+         (parent hpanel2)
          (style '(border))
          (callback
           (lambda (obj evt)
@@ -300,16 +301,17 @@
               (add-edge! g SommetAlea (random-ref Sommet))
               (send CANVAS on-paint)))))))
 
-(define AddSommet
+
+;; Ajout de sommet en position aléatoire
+(define AJOUTER-SOMMET-BUTTON
   (new button%
-       (label "AddSommet")
-       (parent HPANEL)
+       (label "Ajouter sommet")
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
           (let ([Sommet (hash-keys g)]
                 [maximum 0])
-    
             (set! Sommet (hash-keys g))
             (if (> (length Sommet) 0)
                 (begin (set! maximum (apply max Sommet))
@@ -318,24 +320,16 @@
                 (begin (add-node! g 0)
                        (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
             (send CANVAS on-paint))))))
-          
-          
 
 
-;random-ref?
-
-
-
-
-
-(define REMOVEArr
+;; Suppression de arete aléatoire
+(define SUPPRESSION-ARETE-BUTTON
   (let ([SommetAlea 0]
         [ArreteAlea 0]
-        [IsFilter empty]
-        )
+        [IsFilter empty])
     (new button%
-         (label "removearr")
-         (parent HPANEL)
+         (label "Supprimer arête")
+         (parent hpanel2)
          (style '(border))
          (callback
           (lambda (obj evt)
@@ -347,74 +341,84 @@
               (rm-edge! g SommetAlea ArreteAlea)
               (send CANVAS on-paint)))))))
 
-(define zoom
+
+;; Zoom du graphique
+(define ZOOM-GRAPH-BUTTON
   (new button%
-       (label "zoom")
-       (parent HPANEL)
+       (label "Zoom") ;; TODO: Remplacer par icone
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
-          (send BITMAP-DC scale 1.5 1.5)
-          ))))
-;jpp
-         
-         
+          (send BITMAP-DC scale 1.5 1.5)))))
 
-(define dezoom
+
+;; Dezoom du graphique
+(define DEZOOM-GRAPH-BUTTON
   (new button%
-       (label "dezoom")
-       (parent HPANEL)
+       (label "Dezoom") ;; TODO: Remplacer par icone
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
           (send BITMAP-DC scale 0.5 0.5)))))
 
-(define ralenti
+;; Ralentissement du temps de l'animation
+(define RALENTI-GRAPH-BUTTON
   (new button%
-       (label "ralenti")
-       (parent HPANEL)
+       (label "Ralentir") ;; TODO: Remplacer par icone
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
           (send TIMER start (inexact->exact (round (* (send TIMER interval) 1.5))))))))
 
-(define accèlerer
+;; Acceleration du temps de l'animation
+(define ACCELERATION-GRAPH-BUTTON
   (new button%
-       (label accelerer)
-       (parent HPANEL)
+       (label "Accelerer") ;; TODO: Remplacer par icone
+       (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt) 
           (send TIMER start (inexact->exact (+ (round (* (send TIMER interval) 0.5)) 1)))))))
 
-(define modifier
+;; Champ de texte c1
+(define C1-MODIFICATION-TEXTFIELD
   (new text-field%
-       (label "modifier")
+       (label "C1")
        (parent FRAME)
-       (init-value "0")))
-       
+       (init-value (number->string(r 'get-c1)))))
 
-(define modifierbutton
+;; Champ de texte c1
+(define C2-MODIFICATION-TEXTFIELD
+  (new text-field%
+       (label "C2")
+       (parent FRAME)
+       (init-value (number->string(r 'get-c2)))))
+
+;; Champ de texte c1
+(define C3-MODIFICATION-TEXTFIELD
+  (new text-field%
+       (label "C3")
+       (parent FRAME)
+       (init-value (number->string(r 'get-c3)))))
+       
+;; Application des modification des constantes c1, c2 et c3
+(define MODIFICATION-CONSTANTES-BUTTON
   (new button%
-       (label "Modifier")
+       (label "Appliquer")
        (parent FRAME)
        
        (style '(border))
        (callback
         (lambda (obj evt)
-          (let ((n (string->number (send modifier get-value))))
-            (r 'set-c1 n))))))
-
-
-
-
-;(define reinitialisation
-;  (new button%
-;       (label "reinitialisation")
-;       (parent HPANEL)
-;       (style '(border))
-;       (callback
-;        (lambda (obj evt)
-;          (set! g graphtempo)))))
+          (let ([c1 (string->number (send C1-MODIFICATION-TEXTFIELD get-value))]
+                [c2 (string->number (send C2-MODIFICATION-TEXTFIELD get-value))]
+                [c3 (string->number (send C3-MODIFICATION-TEXTFIELD get-value))])
+            (begin
+              (r 'set-c1 c1)
+              (r 'set-c2 c2)
+              (r 'set-c3 c3)))))))
 
 (send START-DIALOG show #t)
