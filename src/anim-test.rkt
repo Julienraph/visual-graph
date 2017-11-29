@@ -5,7 +5,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CONSTANTES ;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CONSTANTES ;;;;;;;;;;;;;;;;;;
 
 (define RED-PEN (make-object pen% "red" 8 'solid))
 (define BLACK-PEN (make-object pen% "black" 1 'solid))
@@ -25,6 +25,14 @@
 
 ;; Horloge animation
 (define TIMER (new timer% (notify-callback (lambda () (send CANVAS on-paint)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; IMAGES ;;;;;;;;;;;;;;;;;;;
+
+(define pause (read-bitmap "PAUSE.png"))
+(define play (read-bitmap "PLAY.png"))
+(define accelerer (read-bitmap "ACCELERER.png"))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DEFINITIONS PRATIQUES ;;;;;;;;;;;
@@ -61,7 +69,7 @@
   (call-with-output-file file-name
     (lambda (p-out)
       (define (imprimer arc)
-        (fprintf p-out "~a -> ~a ;/n" (car arc)(cadr arc)))
+        (fprintf p-out "~a -> ~a ;\n" (car arc)(cadr arc)))
       (fprintf p-out "diagraph G {\n")
       (for-each imprimer L)
       (fprintf p-out "}\n"))
@@ -72,10 +80,6 @@
   (let ([res null])
     (for ([(k v) (in-hash graph)])
       (set! res (append res (list(list k (set->list v))))))res))
-
-
-  
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -99,6 +103,7 @@
   (new horizontal-panel%
        [parent VPANEL]))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; CANVAS ;;;;;;;;;;;;;;;;;;;;;
 
@@ -115,11 +120,6 @@
                                       (dessiner-sommets g e)
                                       (send dc draw-bitmap BITMAP graph-x graph-y 'solid)
                                       (r 'relax g e)))))
-
-
-(define pause (read-bitmap "PAUSE.png"))
-(define play (read-bitmap "PLAY.png"))
-(define accelerer (read-bitmap "ACCELERER.png"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -287,7 +287,7 @@
        (callback
         (lambda (obj evt)
           (let([file-path (put-file)]
-               [res-list (hash->list g)])
+               [res-list (graph->list g)])
             
             (list->dot res-list file-path))))))
 
