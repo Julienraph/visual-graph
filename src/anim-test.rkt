@@ -1,6 +1,7 @@
 #lang racket/gui
 
 (require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt")
+(provide (all-defined-out))
 (require racket/random)
 
 
@@ -19,6 +20,20 @@
 (define animation #f)
 (define dot-regex "[a-zA-Z]|[0-9]->[a-zA-Z]|[0-9]")
 
+;;Calcul du Barycentre du graphique
+
+(define (BARYCENTRE g e)
+  (let ([sum-x 0]
+        [sum-y 0]
+        [barycentre (make-vect 250 250)])
+    (when (not (equal? (hash-count e) 0))
+  (begin
+    (for ([(k v) (in-hash e)])
+    (set! sum-x (+ sum-x (coord-x v)))
+    (set! sum-y (+ sum-y (coord-y v))))
+    (set! barycentre (make-vect (/ sum-x (hash-count e)) (/ sum-y (hash-count e))))))
+    barycentre))
+
 ;; Double buffer
 (define BITMAP (make-object bitmap% WIDTH HEIGHT))
 (define BITMAP-DC (new bitmap-dc% (bitmap BITMAP)))
@@ -32,6 +47,15 @@
 (define pause (read-bitmap "PAUSE.png"))
 (define play (read-bitmap "PLAY.png"))
 (define accelerer (read-bitmap "ACCELERER.png"))
+(define sauvegarder (read-bitmap "SAVE.png"))
+(define zoom (read-bitmap "ZOOM.png"))
+(define dezoom (read-bitmap "DEZOOM.jpg"))
+(define arrete (read-bitmap "arrete.png"))
+(define SupprArrete (read-bitmap "notarrete.png"))
+(define bouton (read-bitmap "bouton.png"))
+(define pasbouton(read-bitmap "supprboutton.png"))
+(define slow (read-bitmap "SLOW.png"))
+(define graphique (read-bitmap "graphique2.png"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -93,15 +117,20 @@
 
 (define HPANEL
   (new horizontal-panel%
-       (parent FRAME)))
+       (parent FRAME)
+       		))
 
 (define VPANEL
   (new vertical-panel%
-       (parent HPANEL)))
+       (parent HPANEL)
+       	))
 
 (define hpanel2
   (new horizontal-panel%
-       [parent VPANEL]))
+       [parent VPANEL]
+       [min-height 0]
+       [stretchable-height #f]))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -117,7 +146,7 @@
                                       (send BITMAP-DC set-smoothing 'smoothed)
                                       (dessiner-liens g e)
                                       (dessiner-sommets g e)
-                                      (send dc draw-bitmap BITMAP graph-x graph-y 'solid)
+                                      (send dc draw-bitmap BITMAP 0 0 'solid)
                                       (r 'relax g e)))))
 
 
@@ -195,7 +224,7 @@
 ;; Mise en pause de l'animation en cours
 (define PAUSE-ANIMATION-BUTTON
   (new button%
-       (label "Start")
+       (label play)
        (parent hpanel2)
        (style '(border))
        (callback
@@ -211,26 +240,10 @@
                 (send PAUSE-ANIMATION-BUTTON set-label pause)))))))
 
 
-;; Suppression d'un sommet aleatoire de l'animation en cours
-(define SUPPRESSION-SOMMET-BUTTON
-  (let ([SommetAlea 0])
-    (new button%
-         (label "Enlever sommet")
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (when (not (equal? (hash-count g) 0))
-              (begin (set! SommetAlea (random-ref (hash-keys e)))
-                     (rm-node! g SommetAlea)
-                     (hash-remove! e SommetAlea)
-                     (send CANVAS on-paint))))))))
-
-
 ;; Modification du graphique
 (define MODIFY-GRAPH-BUTTON
   (new button%
-       (label "Modifier")
+       (label graphique)
        (parent hpanel2)
        (style '(border))
        (callback
@@ -269,13 +282,48 @@
 (define SAVE-GRAPH-BUTTON
   (new button%
        (parent hpanel2)
-       (label "Sauvegarder")
+       (label sauvegarder)
        (style'(border))
        (callback
         (lambda (obj evt)
           (let([file-path (put-file)]
                [res-list (graph->list g)])
             (list->dot res-list file-path))))))
+
+
+;; Ajout de sommet en position aléatoire
+(define AJOUTER-SOMMET-BUTTON
+  (new button%
+       (label bouton)
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (let ([Sommet (hash-keys g)]
+                [maximum 0])
+            (set! Sommet (hash-keys g))
+            (if (> (length Sommet) 0)
+                (begin (set! maximum (apply max Sommet))
+                       (add-node! g (+ maximum 1))
+                       (hash-set! e (+ maximum 1) (make-vect (random WIDTH) (random HEIGHT))))
+                (begin (add-node! g 0)
+                       (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
+            (send CANVAS on-paint))))))
+
+;; Suppression d'un sommet aleatoire de l'animation en cours
+(define SUPPRESSION-SOMMET-BUTTON
+  (let ([SommetAlea 0])
+    (new button%
+         (label pasbouton)
+         (parent hpanel2)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (when (not (equal? (hash-count g) 0))
+              (begin (set! SommetAlea (random-ref (hash-keys e)))
+                     (rm-node! g SommetAlea)
+                     (hash-remove! e SommetAlea)
+                     (send CANVAS on-paint))))))))
 
 
 ;; Ajout d'arete entre deux sommets aléatoires
@@ -285,7 +333,7 @@
         [IsFilter empty]                                  
         [voisin 0])   ;; TODO: Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
     (new button%
-         (label "Ajouter arête")
+         (label arrete)
          (parent hpanel2)
          (style '(border))
          (callback
@@ -302,33 +350,13 @@
               (send CANVAS on-paint)))))))
 
 
-;; Ajout de sommet en position aléatoire
-(define AJOUTER-SOMMET-BUTTON
-  (new button%
-       (label "Ajouter sommet")
-       (parent hpanel2)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (let ([Sommet (hash-keys g)]
-                [maximum 0])
-            (set! Sommet (hash-keys g))
-            (if (> (length Sommet) 0)
-                (begin (set! maximum (apply max Sommet))
-                       (add-node! g (+ maximum 1))
-                       (hash-set! e (+ maximum 1) (make-vect (random WIDTH) (random HEIGHT))))
-                (begin (add-node! g 0)
-                       (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
-            (send CANVAS on-paint))))))
-
-
 ;; Suppression de arete aléatoire
 (define SUPPRESSION-ARETE-BUTTON
   (let ([SommetAlea 0]
         [ArreteAlea 0]
         [IsFilter empty])
     (new button%
-         (label "Supprimer arête")
+         (label SupprArrete)
          (parent hpanel2)
          (style '(border))
          (callback
@@ -342,31 +370,52 @@
               (send CANVAS on-paint)))))))
 
 
+
+
+
+
 ;; Zoom du graphique
+
+
+
 (define ZOOM-GRAPH-BUTTON
   (new button%
-       (label "Zoom") ;; TODO: Remplacer par icone
+       (label zoom) ;; TODO: Remplacer par icone
        (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
-          (send BITMAP-DC scale 1.5 1.5)))))
-
-
+          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                 [x (vector-ref init-matrix 0)]
+                 [y (vector-ref init-matrix 3)]
+                 [tx (vector-ref init-matrix 4)]
+                 [ty (vector-ref init-matrix 5)])
+            (send BITMAP-DC set-initial-matrix
+                  (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25))))))))
+        
+          
 ;; Dezoom du graphique
 (define DEZOOM-GRAPH-BUTTON
   (new button%
-       (label "Dezoom") ;; TODO: Remplacer par icone
+       (label dezoom) ;; TODO: Remplacer par icone
        (parent hpanel2)
        (style '(border))
        (callback
         (lambda (obj evt)
-          (send BITMAP-DC scale 0.5 0.5)))))
+          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                 [x (vector-ref init-matrix 0)]
+                 [y (vector-ref init-matrix 3)]
+                 [tx (vector-ref init-matrix 4)]
+                 [ty (vector-ref init-matrix 5)])
+            (send BITMAP-DC set-initial-matrix
+                  (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25))))))))
+                 
+          
 
 ;; Ralentissement du temps de l'animation
 (define RALENTI-GRAPH-BUTTON
   (new button%
-       (label "Ralentir") ;; TODO: Remplacer par icone
+       (label slow) ;; TODO: Remplacer par icone
        (parent hpanel2)
        (style '(border))
        (callback
@@ -376,7 +425,7 @@
 ;; Acceleration du temps de l'animation
 (define ACCELERATION-GRAPH-BUTTON
   (new button%
-       (label "Accelerer") ;; TODO: Remplacer par icone
+       (label accelerer) ;; TODO: Remplacer par icone
        (parent hpanel2)
        (style '(border))
        (callback
@@ -420,5 +469,6 @@
               (r 'set-c1 c1)
               (r 'set-c2 c2)
               (r 'set-c3 c3)))))))
+
 
 (send START-DIALOG show #t)

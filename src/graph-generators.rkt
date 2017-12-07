@@ -26,7 +26,7 @@
 
 ;Graphe d'un arbre complet d'arité arity et profondeur depth
 (define (complete-tree-graph arity depth)
-  (define (NombreBoucle arity depth) ;Nombre de boucle à faire, aussi égal au nombre de sommet de l'arbre arity - 1
+  (define (NombreBoucle arity depth) ;Nombre de boucle à faire, aussi égal au nombre de sommet de l'arbre qui a (arity - 1) sommet
   (if (equal? 0 depth)
       0
       (+ (expt arity (- depth 1)) (NombreBoucle arity (- depth 1)))))
