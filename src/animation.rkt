@@ -173,7 +173,28 @@
        (label "Type graph: ")
        (parent NEW-GRAPH-DIALOG-VPANEL)
        (choices
-        (list "" "Chain" "Cylic" "Complete Tree" "Grid" "Clique"))))
+        (list "" "Chain" "Cyclic" "Complete Tree" "Grid" "Clique"))
+       (callback
+        (lambda (obj evt)
+          (when (equal? (send NEW-GRAPH-CHOICE get-string-selection) "Complete Tree")
+            (send NEW-GRAPH-ARETE enable #t)
+            (send NEW-GRAPH-ARETE set-value "0")
+            (send NEW-GRAPH-ARETE set-label "Profondeur: ")
+            (send NEW-GRAPH-TEXT set-label "Arité:"))
+          (when (equal? (send NEW-GRAPH-CHOICE get-string-selection) "Grid")
+            (send NEW-GRAPH-ARETE enable #t)
+            (send NEW-GRAPH-ARETE set-value "0")
+            (send NEW-GRAPH-TEXT set-label "Largeur: ")
+            (send NEW-GRAPH-ARETE set-label "Hauteur: "))
+          (when (or (equal? (send NEW-GRAPH-CHOICE get-string-selection) "Chain")
+                    (equal? (send NEW-GRAPH-CHOICE get-string-selection) "")
+                    (equal? (send NEW-GRAPH-CHOICE get-string-selection) "Clique")
+                    (equal? (send NEW-GRAPH-CHOICE get-string-selection) "Cyclic"))
+            (send NEW-GRAPH-ARETE enable #f)
+            (send NEW-GRAPH-ARETE set-label "Nombre d'arêtes: ")
+            (send NEW-GRAPH-ARETE set-value "")
+            (send NEW-GRAPH-TEXT set-label "Nombre de sommets: "))))))
+            
 
 ;; Objet graphique de type text-field qui permet de stocker le nombre de sommets choisis par l'utilisateur
 (define NEW-GRAPH-TEXT
@@ -181,6 +202,13 @@
        (label "Nombre de sommets: ")
        (parent NEW-GRAPH-DIALOG-VPANEL)
        (init-value "0")))
+
+(define NEW-GRAPH-ARETE
+  (new text-field%
+       (label "Nombre d'arêtes: ")
+       (parent NEW-GRAPH-DIALOG-VPANEL)
+       (init-value "0")
+       	[enabled #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; BUTTONS ;;;;;;;;;;;;;;;;;;;;
@@ -193,15 +221,16 @@
        (callback
         (lambda (obj evt)
           (let ([type-graph (send NEW-GRAPH-CHOICE get-string-selection)]
-                [nombre-sommets (string->number(send NEW-GRAPH-TEXT get-value))])
+                [nombre-sommets (string->number(send NEW-GRAPH-TEXT get-value))]
+                [nombre-aretes (string->number(send NEW-GRAPH-ARETE get-value))])
             (cond
               [(equal? type-graph "Chain") (set! g (chain-graph nombre-sommets))]
-              [(equal? type-graph "Cylic") (set! g (cyclic-graph nombre-sommets))]
-              [(equal? type-graph "Complete Tree") (set! g (complete-tree-graph nombre-sommets 2))]
-              [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))]
+              [(equal? type-graph "Cyclic") (set! g (cyclic-graph nombre-sommets))]
+              [(equal? type-graph "Complete Tree") (set! g (complete-tree-graph nombre-sommets nombre-aretes))]
+              [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-aretes))]
               [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
+              [(equal? type-graph "") (set! g (sommet-graph nombre-sommets))]
               [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
-            (printf "~a" (hash-count g))
             (when (equal? (hash-count g) 0)
               (send SUPPRESSION-SOMMET-BUTTON enable #f)
               (send AJOUTER-ARETE-BUTTON enable #f)
@@ -268,10 +297,11 @@
         (lambda (obj evt)
           (define imported-file
             (get-file "Importer graphique" #f #f #f #f null '(("Any" "*.dot"))))
+          (when (not (equal? imported-file #f))
           (set! g (dot->list imported-file))
           (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
           (send FRAME show #t)
-          (send START-DIALOG show #f))]))
+          (send START-DIALOG show #f)))]))
 
 
 ;; Button sauvegarde de graphe sur emplacement choisis par l'utilisateur
@@ -284,7 +314,8 @@
         (lambda (obj evt)
           (let([file-path (put-file)]
                [res-list (graph->list g)])
-            (list->dot res-list file-path))))))
+            (when (not (equal? file-path #f))
+            (list->dot res-list file-path)))))))
 
 
 ;; Ajout de sommet en position aléatoire
@@ -403,7 +434,8 @@
                    [tx (vector-ref init-matrix 4)]
                    [ty (vector-ref init-matrix 5)])
               (send BITMAP-DC set-initial-matrix
-                    (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25))))))))
+                    (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25)))
+              (send CANVAS on-paint))))))
         
           
   ;; Dezoom du graphique
@@ -420,7 +452,8 @@
                    [tx (vector-ref init-matrix 4)]
                    [ty (vector-ref init-matrix 5)])
               (send BITMAP-DC set-initial-matrix
-                    (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25))))))))
+                    (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25)))
+              (send CANVAS on-paint))))))
                  
           
 
