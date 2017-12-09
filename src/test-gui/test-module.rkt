@@ -1,6 +1,6 @@
 #lang racket
 
-(require rackunit "../vect2D.rkt" "../graph.rkt" "../graph-generators.rkt")
+(require rackunit "../vect2D.rkt" "../graph.rkt" "../graph-generators.rkt" "../relaxation.rkt")
 (require rackunit rackunit/gui)
 
 (define v1 (make-vect 5 8))
@@ -19,15 +19,15 @@
                          (test-case "(coord-x v1) est égal à 5?" (check-equal? (coord-x v1) 5)))
 
              (test-suite "coord-y"
-                           (test-case "(coord-y v1) est égal à 8?" (check-equal? (coord-y v1) 8)))
+                         (test-case "(coord-y v1) est égal à 8?" (check-equal? (coord-y v1) 8)))
 
              (test-suite "vect-sum"
-                           (test-case "(vect-sum v1 v2) est bien égal à (8 . 12) ?" (check-equal? (vect-sum v1 v2) (make-vect 8 12))))
+                         (test-case "(vect-sum v1 v2) est bien égal à (8 . 12) ?" (check-equal? (vect-sum v1 v2) (make-vect 8 12))))
              (test-suite "vect-mult"
-                           (test-case "(vect-mult v1 v2) est bien égal à (15 . 32) ?" (check-equal? (vect-mult v1 v2) (make-vect 15 32))))
+                         (test-case "(vect-mult v1 v2) est bien égal à (15 . 32) ?" (check-equal? (vect-mult v1 v2) (make-vect 15 32))))
 
              (test-suite "vect-sum*"
-                           (test-case "(vect-sum v1 v2 v3) est t-il bien égal à (18 . 25) ?" (check-equal? (vect-sum* v1 v2 v3) (make-vect 18 25))))
+                         (test-case "(vect-sum v1 v2 v3) est t-il bien égal à (18 . 25) ?" (check-equal? (vect-sum* v1 v2 v3) (make-vect 18 25))))
 
              (test-suite "vect-scalar"
                          (test-case "(vect-scalar 5 v1) est t-il bien égal à (25 . 40) ?" (check-equal? (vect-scalar 5 v1) (make-vect 25 40))))
@@ -59,18 +59,18 @@
 
              (test-suite "add-edge!"
                         
-                          (let ([g (empty-graph)])
-                            (test-case "ajouter A dans g" (add-node! g 'A))   
-                            (test-case "Ajouter arrête entre A et B alors que B n'existe pas"
-                                       (add-edge! g 'A 'B))
-                            (test-case "B est il une clé de g?" (check-true (hash-has-key? g 'B)))
-                            (test-case "B est un voisin de A?" (check-true (set-member? (hash-ref g 'A) 'B)))
-                            (test-case "A est un voisin de B?" (check-true (set-member? (hash-ref g 'B) 'A)))
-                            (test-case "Faire une arrête entre deux sommmets C D qui n'existe pas" (add-edge! g 'C 'D))
-                            (test-case "C est il une clé de g?" (check-true (hash-has-key? g 'C)))
-                            (test-case "D est il une clé de g?" (check-true (hash-has-key? g 'D)))
-                            (test-case "D est un voisin de C?" (check-true (set-member? (hash-ref g 'C) 'D)))
-                            (test-case "C est un voisin de D?" (check-true (set-member? (hash-ref g 'D) 'C))) ))
+                         (let ([g (empty-graph)])
+                           (test-case "ajouter A dans g" (add-node! g 'A))   
+                           (test-case "Ajouter arrête entre A et B alors que B n'existe pas"
+                                      (add-edge! g 'A 'B))
+                           (test-case "B est il une clé de g?" (check-true (hash-has-key? g 'B)))
+                           (test-case "B est un voisin de A?" (check-true (set-member? (hash-ref g 'A) 'B)))
+                           (test-case "A est un voisin de B?" (check-true (set-member? (hash-ref g 'B) 'A)))
+                           (test-case "Faire une arrête entre deux sommmets C D qui n'existe pas" (add-edge! g 'C 'D))
+                           (test-case "C est il une clé de g?" (check-true (hash-has-key? g 'C)))
+                           (test-case "D est il une clé de g?" (check-true (hash-has-key? g 'D)))
+                           (test-case "D est un voisin de C?" (check-true (set-member? (hash-ref g 'C) 'D)))
+                           (test-case "C est un voisin de D?" (check-true (set-member? (hash-ref g 'D) 'C))) ))
 
              (test-suite "get-nodes"
                          (let ([g (empty-graph)])
@@ -116,8 +116,8 @@
                            (test-case "Soit g = (chain-graph 10), y a t-il bien 10 sommets?" (check-equal? (hash-count g) 10))
                            (test-case "Soit un compteur initialisé à 0, on compte les arrêtes" (for ([(k v)(in-hash g)])
                                                                                                  (for ([t (in-list (set->list v))])
-                                                                                                 (set! compteur (+ compteur 1))
-                                                                                                 (rm-edge! g k t))))
+                                                                                                   (set! compteur (+ compteur 1))
+                                                                                                   (rm-edge! g k t))))
                            (test-case "Y a t-il bien 9 arrêtes ?" (check-equal? compteur 9))))
 
              (test-suite "cyclic-graph"
@@ -126,8 +126,8 @@
                            (test-case "Soit g = (cyclic-graph 10), y a t-il bien 10 sommets?" (check-equal? (hash-count g) 10))
                            (test-case "Soit un compteur initialisé à 0, on compte les arrêtes" (for ([(k v)(in-hash g)])
                                                                                                  (for ([t (in-list (set->list v))])
-                                                                                                 (set! compteur (+ compteur 1))
-                                                                                                 (rm-edge! g k t))))
+                                                                                                   (set! compteur (+ compteur 1))
+                                                                                                   (rm-edge! g k t))))
                            (test-case "Y a t-il bien 10 arrêtes ?" (check-equal? compteur 10))))
              (test-suite "complete-tree-graph"
                          (let ([g (complete-tree-graph 3 2)]
@@ -135,8 +135,8 @@
                            (test-case "Soit g = (complete-tree-graph 3 2), y a t-il bien 13 sommets?" (check-equal? (hash-count g) 13))
                            (test-case "Soit un compteur initialisé à 0, on compte les arrêtes" (for ([(k v)(in-hash g)])
                                                                                                  (for ([t (in-list (set->list v))])
-                                                                                                 (set! compteur (+ compteur 1))
-                                                                                                 (rm-edge! g k t))))
+                                                                                                   (set! compteur (+ compteur 1))
+                                                                                                   (rm-edge! g k t))))
                            (test-case "Y a t-il 12 arrêtes?" (check-equal? compteur 12))))
 
              (test-suite "grid-graph"
@@ -145,8 +145,8 @@
                            (test-case "Soit g = (grid-graph 2 2), y a t-il bien 9 sommets?" (check-equal? (hash-count g) 9))
                            (test-case "Soit un compteur initialisé à 0, on compte les arrêtes" (for ([(k v)(in-hash g)])
                                                                                                  (for ([t (in-list (set->list v))])
-                                                                                                 (set! compteur (+ compteur 1))
-                                                                                                 (rm-edge! g k t))))
+                                                                                                   (set! compteur (+ compteur 1))
+                                                                                                   (rm-edge! g k t))))
                            (test-case "Y a t-il bien 12 arrêtes ?" (check-equal? compteur 12))))
              (test-suite "clique-graph"
                          (let ([g (clique-graph 10)]
@@ -154,9 +154,36 @@
                            (test-case "Soit g = (clique-graph 10), y a t-il bien 10 sommets ?" (check-equal? (hash-count g) 10))
                            (test-case "Soit un compteur initialisé à 0, on compte les arrêtes" (for ([(k v)(in-hash g)])
                                                                                                  (for ([t (in-list (set->list v))])
-                                                                                                 (set! compteur (+ compteur 1))
-                                                                                                 (rm-edge! g k t))))
+                                                                                                   (set! compteur (+ compteur 1))
+                                                                                                   (rm-edge! g k t))))
                            (test-case "Y a t-il bien 10(10 - 1)/2 arrêtes ?" (check-equal? compteur (/ (* 10 (- 10 1)) 2))))))
 
- (test-suite "relaxation.rkt")
- )
+ (test-suite "relaxation.rkt"
+             
+             (test-suite "Getters: valeurs par defaut"
+                         (let ([r (new-relaxator)])
+                           
+                           ; Test des valeurs par defaut
+                           (test-case "c1 = 2?" (check-equal? (r 'get-c1) 2))
+                           (test-case "c2 = 20?" (check-equal? (r 'get-c2) 20))
+                           (test-case "c3 = 400?" (check-equal? (r 'get-c3) 400))
+                           (test-case "c4 = 0.1?" (check-equal? (r 'get-c4) 0.1))))
+             
+             (test-suite "Setters"
+                         (let ([r (new-relaxator)])
+                           
+                           (test-case "On change la valeur de c1 a 10" (r 'set-c1 10))
+                           (test-case "c1 = 10?" (check-equal? (r 'get-c1) 10))
+
+                           (test-case "On change la valeur de c2 a 40" (r 'set-c2 40))
+                           (test-case "c2 = 40?" (check-equal? (r 'get-c2) 40))
+
+                           (test-case "On change la valeur de c3 a 800" (r 'set-c3 800))
+                           (test-case "c3 = 800?" (check-equal? (r 'get-c3) 800))
+
+                           (test-case "On change la valeur de c4 a 0.5" (r 'set-c4 0.5))
+                           (test-case "c4 = 0.5?" (check-equal? (r 'get-c4 10) 0.5))))))
+
+                           
+                           
+                           
