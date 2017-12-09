@@ -36,10 +36,12 @@
       (+ (expt arity (- depth 1)) (NombreBoucle arity (- depth 1)))))
   (let ([res-graph (empty-graph)]
         [depart 1])
-    (for ([i (in-range (NombreBoucle arity depth))])
-      (for ([j (in-range depart (+ depart arity))])
-      (add-edge! res-graph i j))
-      (set! depart (+ depart arity)))
+    (if (equal? depth 0)
+        (add-node! res-graph 0)
+        (for ([i (in-range (NombreBoucle arity depth))])
+          (for ([j (in-range depart (+ depart arity))])
+            (add-edge! res-graph i j))
+          (set! depart (+ depart arity))))
      res-graph))
 
 
