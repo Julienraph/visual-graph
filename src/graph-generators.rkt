@@ -9,18 +9,22 @@
   
 ;Graphe à n sommet et n-1 arêtes formant une chaîne ouverte
 (define (chain-graph n)
-  (let ([res-graph (empty-graph)])       
+  (let ([res-graph (empty-graph)])
+  (if (equal? n 1)
+      (add-node! res-graph 0)
   (for ([i (in-range (- n 1))])
-    (add-edge! res-graph i (+ i 1)))
+    (add-edge! res-graph i (+ i 1))))
     res-graph))
 
 ;Graphe à n sommet et n arêtes formant un cycle
 (define (cyclic-graph n)
   (let ([res-graph (empty-graph)])
+    (if (equal? n 1)
+        (add-node! res-graph 0)
     (for ([i (in-range (- n 1))])
           (when (< i (- n 1))
               (add-edge! res-graph i (+ i 1)))
-            (add-edge! res-graph (- n 1) 0))
+            (add-edge! res-graph (- n 1) 0)))
               res-graph))
 
 
@@ -54,7 +58,9 @@
 ;Clique à n Sommets, c'est à dire tous les sommets reliés entre eux
 (define (clique-graph n)
   (let ([res-graph (empty-graph)])
-  (for ([i (in-range n)])
-    (for ([j (in-range 1 n)])
-      (add-edge! res-graph i j)))
-    res-graph))
+    (if (equal? n 1)
+        (add-node! res-graph 0)
+    (for ([i (in-range n)])
+      (for ([j (in-range 1 n)])
+        (add-edge! res-graph i j))))
+      res-graph))

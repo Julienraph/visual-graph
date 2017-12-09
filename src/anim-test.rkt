@@ -27,11 +27,11 @@
         [sum-y 0]
         [barycentre (make-vect 250 250)])
     (when (not (equal? (hash-count e) 0))
-  (begin
-    (for ([(k v) (in-hash e)])
-    (set! sum-x (+ sum-x (coord-x v)))
-    (set! sum-y (+ sum-y (coord-y v))))
-    (set! barycentre (make-vect (/ sum-x (hash-count e)) (/ sum-y (hash-count e))))))
+      (begin
+        (for ([(k v) (in-hash e)])
+          (set! sum-x (+ sum-x (coord-x v)))
+          (set! sum-y (+ sum-y (coord-y v))))
+        (set! barycentre (make-vect (/ sum-x (hash-count e)) (/ sum-y (hash-count e))))))
     barycentre))
 
 ;; Double buffer
@@ -118,12 +118,12 @@
 (define HPANEL
   (new horizontal-panel%
        (parent FRAME)
-       		))
+       ))
 
 (define VPANEL
   (new vertical-panel%
        (parent HPANEL)
-       	))
+       ))
 
 (define hpanel2
   (new horizontal-panel%
@@ -214,9 +214,18 @@
               [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-sommets))]
               [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
               [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
+            (printf "~a" (hash-count g))
+            (when (equal? (hash-count g) 0)
+              (send SUPPRESSION-SOMMET-BUTTON enable #f)
+              (send AJOUTER-ARETE-BUTTON enable #f)
+              (send SUPPRESSION-ARETE-BUTTON enable #f))
+            (when (equal? (hash-count g) 1)
+              (send AJOUTER-ARETE-BUTTON enable #f)
+              (send SUPPRESSION-ARETE-BUTTON enable #f))
             (when (not (equal? type-graph (empty-graph)))
               (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
               (send FRAME show #t)
+              
               (send NEW-GRAPH-DIALOG show #f)))))))
 
 
@@ -307,30 +316,43 @@
                        (add-node! g (+ maximum 1))
                        (hash-set! e (+ maximum 1) (make-vect (random WIDTH) (random HEIGHT))))
                 (begin (add-node! g 0)
-                       (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))))
+                       (hash-set! e 0 (make-vect (random WIDTH) (random HEIGHT)))
+                       (send SUPPRESSION-SOMMET-BUTTON enable #t)))
+            (when (equal? (length Sommet) 1)
+              (send AJOUTER-ARETE-BUTTON enable #t))
             (send CANVAS on-paint))))))
 
 ;; Suppression d'un sommet aleatoire de l'animation en cours
 (define SUPPRESSION-SOMMET-BUTTON
-  (let ([SommetAlea 0])
     (new button%
          (label pasbouton)
          (parent hpanel2)
          (style '(border))
          (callback
           (lambda (obj evt)
-            (when (not (equal? (hash-count g) 0))
-              (begin (set! SommetAlea (random-ref (hash-keys e)))
-                     (rm-node! g SommetAlea)
-                     (hash-remove! e SommetAlea)
-                     (send CANVAS on-paint))))))))
+            (let ([nbSommet (hash-count g)]
+                  [SommetAleatoire 0])
+            (when (not (equal? nbSommet 0))
+              (begin (set! SommetAleatoire (random-ref (hash-keys e)))
+                     (rm-node! g SommetAleatoire)
+                     (hash-remove! e SommetAleatoire)
+                     (send CANVAS on-paint)))
+             (when (equal? nbSommet 1)
+               (send SUPPRESSION-SOMMET-BUTTON enable #f))
+            (when (equal? nbSommet 2)
+              (send AJOUTER-ARETE-BUTTON enable #f)
+              (send SUPPRESSION-ARETE-BUTTON enable #f))
+            (when (equal? nbSommet 3)
+              (when (set->list (first (hash-values g)))
+                (send SUPPRESSION-ARETE-BUTTON enable #f))))))))
+              
 
 
 ;; Ajout d'arete entre deux sommets aléatoires
 (define AJOUTER-ARETE-BUTTON
   (let ([Sommet empty]
-        [SommetAlea empty]
-        [IsFilter empty]                                  
+        [SommetAleatoire empty]
+        [Filter empty]                                  
         [voisin 0])   ;; TODO: Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
     (new button%
          (label arrete)
@@ -339,136 +361,139 @@
          (callback
           (lambda (obj evt)
             (set! Sommet (hash-keys g))
-            (set! IsFilter (filter (lambda (x) (not (equal? (- (hash-count g) 1) (length (set->list (hash-ref g x)))))) (hash-keys g)))
-            (when (not (equal? IsFilter empty))
-              (set! SommetAlea (random-ref IsFilter))
-              (set! voisin (set->list (hash-ref g SommetAlea)))
+            (set! Filter (filter (lambda (x) (not (equal? (- (hash-count g) 1) (length (set->list (hash-ref g x)))))) (hash-keys g)))
+            (when (not (equal? Filter empty))
+              (set! SommetAleatoire (random-ref Filter))
+              (set! voisin (set->list (hash-ref g SommetAleatoire)))
               (for ((i (in-list voisin)))
                 (set! Sommet (remove i Sommet)))
-              (set! Sommet (remove SommetAlea Sommet))
-              (add-edge! g SommetAlea (random-ref Sommet))
-              (send CANVAS on-paint)))))))
+              (set! Sommet (remove SommetAleatoire Sommet))
+              (add-edge! g SommetAleatoire (random-ref Sommet))
+              (send CANVAS on-paint)
+              (send SUPPRESSION-ARETE-BUTTON enable #t)))))))
 
 
 ;; Suppression de arete aléatoire
 (define SUPPRESSION-ARETE-BUTTON
-  (let ([SommetAlea 0]
-        [ArreteAlea 0]
-        [IsFilter empty])
+  (let ([SommetAleatoire 0]
+        [ArreteAleatoire 0]
+        [Filter empty])
     (new button%
          (label SupprArrete)
          (parent hpanel2)
          (style '(border))
          (callback
           (lambda (obj evt)
-            (set! IsFilter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
-            (when (not (equal? IsFilter empty))
-              ;tester si il y a au moins un sommet qui a un voisin
-              (set! SommetAlea (random-ref  IsFilter))
-              (set! ArreteAlea (random-ref (set->list (hash-ref g SommetAlea))))
-              (rm-edge! g SommetAlea ArreteAlea)
-              (send CANVAS on-paint)))))))
+            (set! Filter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
+            (when (not (equal? Filter empty))
+                 ;tester si il y a au moins un sommet qui a un voisin
+              (set! SommetAleatoire (random-ref  Filter))
+              (set! ArreteAleatoire (random-ref (set->list (hash-ref g SommetAleatoire))))
+              (rm-edge! g SommetAleatoire ArreteAleatoire)
+              (send CANVAS on-paint)
+              (when (equal? (length Filter) 2)
+                (send SUPPRESSION-ARETE-BUTTON enable #f))))))))
 
 
 
 
 
 
-;; Zoom du graphique
+  ;; Zoom du graphique
 
 
 
-(define ZOOM-GRAPH-BUTTON
-  (new button%
-       (label zoom) ;; TODO: Remplacer par icone
-       (parent hpanel2)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
-                 [x (vector-ref init-matrix 0)]
-                 [y (vector-ref init-matrix 3)]
-                 [tx (vector-ref init-matrix 4)]
-                 [ty (vector-ref init-matrix 5)])
-            (send BITMAP-DC set-initial-matrix
-                  (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25))))))))
+  (define ZOOM-GRAPH-BUTTON
+    (new button%
+         (label zoom) ;; TODO: Remplacer par icone
+         (parent hpanel2)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                   [x (vector-ref init-matrix 0)]
+                   [y (vector-ref init-matrix 3)]
+                   [tx (vector-ref init-matrix 4)]
+                   [ty (vector-ref init-matrix 5)])
+              (send BITMAP-DC set-initial-matrix
+                    (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25))))))))
         
           
-;; Dezoom du graphique
-(define DEZOOM-GRAPH-BUTTON
-  (new button%
-       (label dezoom) ;; TODO: Remplacer par icone
-       (parent hpanel2)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
-                 [x (vector-ref init-matrix 0)]
-                 [y (vector-ref init-matrix 3)]
-                 [tx (vector-ref init-matrix 4)]
-                 [ty (vector-ref init-matrix 5)])
-            (send BITMAP-DC set-initial-matrix
-                  (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25))))))))
+  ;; Dezoom du graphique
+  (define DEZOOM-GRAPH-BUTTON
+    (new button%
+         (label dezoom) ;; TODO: Remplacer par icone
+         (parent hpanel2)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                   [x (vector-ref init-matrix 0)]
+                   [y (vector-ref init-matrix 3)]
+                   [tx (vector-ref init-matrix 4)]
+                   [ty (vector-ref init-matrix 5)])
+              (send BITMAP-DC set-initial-matrix
+                    (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25))))))))
                  
           
 
-;; Ralentissement du temps de l'animation
-(define RALENTI-GRAPH-BUTTON
-  (new button%
-       (label slow) ;; TODO: Remplacer par icone
-       (parent hpanel2)
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (send TIMER start (inexact->exact (round (* (send TIMER interval) 1.5))))))))
+  ;; Ralentissement du temps de l'animation
+  (define RALENTI-GRAPH-BUTTON
+    (new button%
+         (label slow) ;; TODO: Remplacer par icone
+         (parent hpanel2)
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (send TIMER start (inexact->exact (round (* (send TIMER interval) 1.5))))))))
 
-;; Acceleration du temps de l'animation
-(define ACCELERATION-GRAPH-BUTTON
-  (new button%
-       (label accelerer) ;; TODO: Remplacer par icone
-       (parent hpanel2)
-       (style '(border))
-       (callback
-        (lambda (obj evt) 
-          (send TIMER start (inexact->exact (+ (round (* (send TIMER interval) 0.5)) 1)))))))
+  ;; Acceleration du temps de l'animation
+  (define ACCELERATION-GRAPH-BUTTON
+    (new button%
+         (label accelerer) ;; TODO: Remplacer par icone
+         (parent hpanel2)
+         (style '(border))
+         (callback
+          (lambda (obj evt) 
+            (send TIMER start (inexact->exact (+ (round (* (send TIMER interval) 0.5)) 1)))))))
 
-;; Champ de texte c1
-(define C1-MODIFICATION-TEXTFIELD
-  (new text-field%
-       (label "C1")
-       (parent FRAME)
-       (init-value (number->string(r 'get-c1)))))
+  ;; Champ de texte c1
+  (define C1-MODIFICATION-TEXTFIELD
+    (new text-field%
+         (label "C1")
+         (parent FRAME)
+         (init-value (number->string(r 'get-c1)))))
 
-;; Champ de texte c1
-(define C2-MODIFICATION-TEXTFIELD
-  (new text-field%
-       (label "C2")
-       (parent FRAME)
-       (init-value (number->string(r 'get-c2)))))
+  ;; Champ de texte c1
+  (define C2-MODIFICATION-TEXTFIELD
+    (new text-field%
+         (label "C2")
+         (parent FRAME)
+         (init-value (number->string(r 'get-c2)))))
 
-;; Champ de texte c1
-(define C3-MODIFICATION-TEXTFIELD
-  (new text-field%
-       (label "C3")
-       (parent FRAME)
-       (init-value (number->string(r 'get-c3)))))
+  ;; Champ de texte c1
+  (define C3-MODIFICATION-TEXTFIELD
+    (new text-field%
+         (label "C3")
+         (parent FRAME)
+         (init-value (number->string(r 'get-c3)))))
        
-;; Application des modification des constantes c1, c2 et c3
-(define MODIFICATION-CONSTANTES-BUTTON
-  (new button%
-       (label "Appliquer")
-       (parent FRAME)
+  ;; Application des modification des constantes c1, c2 et c3
+  (define MODIFICATION-CONSTANTES-BUTTON
+    (new button%
+         (label "Appliquer")
+         (parent FRAME)
        
-       (style '(border))
-       (callback
-        (lambda (obj evt)
-          (let ([c1 (string->number (send C1-MODIFICATION-TEXTFIELD get-value))]
-                [c2 (string->number (send C2-MODIFICATION-TEXTFIELD get-value))]
-                [c3 (string->number (send C3-MODIFICATION-TEXTFIELD get-value))])
-            (begin
-              (r 'set-c1 c1)
-              (r 'set-c2 c2)
-              (r 'set-c3 c3)))))))
+         (style '(border))
+         (callback
+          (lambda (obj evt)
+            (let ([c1 (string->number (send C1-MODIFICATION-TEXTFIELD get-value))]
+                  [c2 (string->number (send C2-MODIFICATION-TEXTFIELD get-value))]
+                  [c3 (string->number (send C3-MODIFICATION-TEXTFIELD get-value))])
+              (begin
+                (r 'set-c1 c1)
+                (r 'set-c2 c2)
+                (r 'set-c3 c3)))))))
 
 
-(send START-DIALOG show #t)
+  (send START-DIALOG show #t)
