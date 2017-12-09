@@ -20,19 +20,6 @@
 (define animation #f)
 (define dot-regex "[a-zA-Z]|[0-9]->[a-zA-Z]|[0-9]")
 
-;;Calcul du Barycentre du graphique
-
-(define (BARYCENTRE g e)
-  (let ([sum-x 0]
-        [sum-y 0]
-        [barycentre (make-vect 250 250)])
-    (when (not (equal? (hash-count e) 0))
-      (begin
-        (for ([(k v) (in-hash e)])
-          (set! sum-x (+ sum-x (coord-x v)))
-          (set! sum-y (+ sum-y (coord-y v))))
-        (set! barycentre (make-vect (/ sum-x (hash-count e)) (/ sum-y (hash-count e))))))
-    barycentre))
 
 ;; Double buffer
 (define BITMAP (make-object bitmap% WIDTH HEIGHT))
@@ -44,18 +31,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; IMAGES ;;;;;;;;;;;;;;;;;;;
 
-(define pause (read-bitmap "PAUSE.png"))
-(define play (read-bitmap "PLAY.png"))
-(define accelerer (read-bitmap "ACCELERER.png"))
-(define sauvegarder (read-bitmap "SAVE.png"))
-(define zoom (read-bitmap "ZOOM.png"))
-(define dezoom (read-bitmap "DEZOOM.jpg"))
-(define arrete (read-bitmap "arrete.png"))
-(define SupprArrete (read-bitmap "notarrete.png"))
-(define bouton (read-bitmap "bouton.png"))
-(define pasbouton(read-bitmap "supprboutton.png"))
-(define slow (read-bitmap "SLOW.png"))
-(define graphique (read-bitmap "graphique2.png"))
+(define pause (read-bitmap "img/PAUSE.png"))
+(define play (read-bitmap "img/PLAY.png"))
+(define accelerer (read-bitmap "img/ACCELERER.png"))
+(define sauvegarder (read-bitmap "img/SAVE.png"))
+(define zoom (read-bitmap "img/ZOOM.png"))
+(define dezoom (read-bitmap "img/DEZOOM.jpg"))
+(define arrete (read-bitmap "img/arrete.png"))
+(define SupprArrete (read-bitmap "img/notarrete.png"))
+(define bouton (read-bitmap "img/bouton.png"))
+(define pasbouton(read-bitmap "img/supprboutton.png"))
+(define slow (read-bitmap "img/SLOW.png"))
+(define graphique (read-bitmap "img/graphique2.png"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
