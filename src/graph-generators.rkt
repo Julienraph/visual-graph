@@ -64,3 +64,10 @@
       (for ([j (in-range 1 n)])
         (add-edge! res-graph i j))))
       res-graph))
+
+;Graphe à n Sommets et sans arêtes
+(define (sommet-graph n)
+  (let ([res-graph (empty-graph)])
+    (for ([i (in-range n)])
+      (add-node! res-graph i))
+    res-graph))
