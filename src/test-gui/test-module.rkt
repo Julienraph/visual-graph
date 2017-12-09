@@ -1,6 +1,6 @@
 #lang racket
 
-(require rackunit "vect2D.rkt" "graph.rkt" "graph-generators.rkt")
+(require rackunit "../vect2D.rkt" "../graph.rkt" "../graph-generators.rkt")
 (require rackunit rackunit/gui)
 
 (define v1 (make-vect 5 8))
@@ -105,7 +105,7 @@
                            (test-case "On refait (rm-edge! g 'A 'B) pour voir si ça nous renvoie pas une erreur" (rm-edge! g 'A 'B))
                            (test-case "On regarde si A est toujours une clé de g" (check-true (hash-has-key? g 'A)))))
 
-             (test-suite "FAIRE ITER EDGE"))
+             )
 
 
  (test-suite "graph-generators"
@@ -158,4 +158,5 @@
                                                                                                  (rm-edge! g k t))))
                            (test-case "Y a t-il bien 10(10 - 1)/2 arrêtes ?" (check-equal? compteur (/ (* 10 (- 10 1)) 2))))))
 
- (test-suite "relaxation.rkt"))
+ (test-suite "relaxation.rkt")
+ )
