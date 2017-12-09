@@ -7,5 +7,4 @@ L2 - Université Nice Sophia Antipolis
 
 * **Alessandro RUBIO MORAES**
 * **Raphaël JULIEN**
-
-(À remplir ...)
+Lien vers la doc https://goo.gl/PLkUgv
