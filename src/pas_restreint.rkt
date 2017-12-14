@@ -1,8 +1,8 @@
 #lang racket/gui
 (require "relaxation.rkt" "positioning.rkt" "vect2D.rkt" "graph.rkt" "graph-generators.rkt")
 
-(define RED-PEN (make-object pen% "red" 8 'solid))
-(define BLACK-PEN (make-object pen% "black" 1 'solid))
+(define RED-PEN (make-object pen% "red" 0.08 'solid))
+(define BLACK-PEN (make-object pen% "black" 0.08 'solid))
 (define WIDTH 5)
 (define HEIGHT 5)
 (define g (grid-graph 3 3))
@@ -54,9 +54,16 @@
        (parent HPANEL)
        ))
 
+
+(r 'set-c3 1)
+(r 'set-c1 2.8)
+(r 'set-c2 0)
+(r 'set-c4 0.001)
 ;; Boucle 
-(for ([i 20])
+(for ([i 10000])
   (r 'relax g e))
+  
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; CANVAS ;;;;;;;;;;;;;;;;;;;;;
@@ -73,5 +80,18 @@
                                       (dessiner-sommets g e)
                                       (send dc draw-bitmap BITMAP 0 0 'solid)
                                       ))))
+
+(define (distance g e)
+  (let ([d 0]
+        [res empty])
+  (for ([(k v) (in-hash e)])
+    (for ([i (in-list (set->list (get-neighbors g k)))])
+    (set! d (sqr (vect-norm (vect-sum (vect-scalar -1 (hash-ref e k)) (hash-ref e i)))))
+     (set! res (append res (list d)))))res))
+
+
+(*(/(-(apply max (distance g e))  (apply min (distance g e)))(apply min (distance g e))) 100)
+
+;(send FRAME show #t)
 
 

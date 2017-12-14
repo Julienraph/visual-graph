@@ -22,11 +22,27 @@
     (for-each (lambda (arg)
                 (apply-positioning res-hash (car arg) (cdr arg))) L)res-hash))
 
+
 ;; Creation d'une fonction de placement d'un canevas hxw a partir des noeuds de L.
+
+(define (random-loop w h Ensemblevecteur)
+  (let ([vecteur (make-vect (random  (- w 1)) (random  (- h 1)))])
+    (if (not (equal? (member vecteur Ensemblevecteur) #f))
+        (random-loop w h Ensemblevecteur)
+        vecteur)))
+        
+  
+      
 (define (random-positioning-of-node-list w h L)
-  (let ([res-hash (make-hash)])
-    (for-each (lambda (arg)
-                (apply-positioning res-hash arg (make-vect (+ (random  (- w 1)) (random)) (+ (random  (- h 1)) (random)))))L)res-hash))
+  (let ([Ensemblevecteur empty]
+        [vecteur empty]
+        [res-hash (make-hash)])
+    (for [(i (in-list L))]
+      (set! vecteur (random-loop w h Ensemblevecteur))
+      (apply-positioning res-hash i (make-vect (car vecteur) (cdr vecteur)))
+      (set! Ensemblevecteur (append Ensemblevecteur (list vecteur))))
+       
+    res-hash))
   
 ;; Deplacement du sommet node-id.
 (define (positioning-move-node! positioning node-id vect)
@@ -35,4 +51,4 @@
 ;; Methode qui affiche a la console la fonction de placement.
 (define (print-positioning id-list positioning)
   (for [(i id-list)]
-     (printf "~a (~a, ~a) \n" i (car (hash-ref positioning i)) (car (cdr (hash-ref positioning i))))))
+    (printf "~a (~a, ~a) \n" i (car (hash-ref positioning i)) (car (cdr (hash-ref positioning i))))))
