@@ -208,7 +208,7 @@
        (label "Nombre d'arêtes: ")
        (parent NEW-GRAPH-DIALOG-VPANEL)
        (init-value "0")
-       	[enabled #f]))
+       [enabled #f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; BUTTONS ;;;;;;;;;;;;;;;;;;;;
@@ -298,10 +298,10 @@
           (define imported-file
             (get-file "Importer graphique" #f #f #f #f null '(("Any" "*.dot"))))
           (when (not (equal? imported-file #f))
-          (set! g (dot->list imported-file))
-          (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
-          (send FRAME show #t)
-          (send START-DIALOG show #f)))]))
+            (set! g (dot->list imported-file))
+            (set! e (random-positioning-of-node-list WIDTH HEIGHT (get-nodes g)))
+            (send FRAME show #t)
+            (send START-DIALOG show #f)))]))
 
 
 ;; Button sauvegarde de graphe sur emplacement choisis par l'utilisateur
@@ -315,7 +315,7 @@
           (let([file-path (put-file)]
                [res-list (graph->list g)])
             (when (not (equal? file-path #f))
-            (list->dot res-list file-path)))))))
+              (list->dot res-list file-path)))))))
 
 
 ;; Ajout de sommet en position aléatoire
@@ -342,27 +342,34 @@
 
 ;; Suppression d'un sommet aleatoire de l'animation en cours
 (define SUPPRESSION-SOMMET-BUTTON
-    (new button%
-         (label pasbouton)
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (let ([nbSommet (hash-count g)]
-                  [SommetAleatoire 0])
+  (new button%
+       (label pasbouton)
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (let ([nbSommet (hash-count g)]
+                [SommetAleatoire 0]
+                [Filter empty])
+            (set! Filter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
             (when (not (equal? nbSommet 0))
               (begin (set! SommetAleatoire (random-ref (hash-keys e)))
+                     (when (equal? (length Filter) 2)
+                       (when (equal? (length (set->list (get-neighbors g SommetAleatoire))) 1)
+                         (send SUPPRESSION-ARETE-BUTTON enable #f)))
                      (rm-node! g SommetAleatoire)
                      (hash-remove! e SommetAleatoire)
                      (send CANVAS on-paint)))
-             (when (equal? nbSommet 1)
-               (send SUPPRESSION-SOMMET-BUTTON enable #f))
+            (when (equal? nbSommet 1)
+              (send SUPPRESSION-SOMMET-BUTTON enable #f))
             (when (equal? nbSommet 2)
               (send AJOUTER-ARETE-BUTTON enable #f)
               (send SUPPRESSION-ARETE-BUTTON enable #f))
             (when (equal? nbSommet 3)
               (when (set->list (first (hash-values g)))
-                (send SUPPRESSION-ARETE-BUTTON enable #f))))))))
+                (send SUPPRESSION-ARETE-BUTTON enable #f)))
+              
+            )))))
               
 
 
@@ -416,103 +423,100 @@
 
 
 
-  ;; Zoom du graphique
-
-
-
-  (define ZOOM-GRAPH-BUTTON
-    (new button%
-         (label zoom)
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
-                   [x (vector-ref init-matrix 0)]
-                   [y (vector-ref init-matrix 3)]
-                   [tx (vector-ref init-matrix 4)]
-                   [ty (vector-ref init-matrix 5)])
-              (send BITMAP-DC set-initial-matrix
-                    (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25)))
-              (send CANVAS on-paint))))))
+;; Zoom du graphique
+(define ZOOM-GRAPH-BUTTON
+  (new button%
+       (label zoom)
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                 [x (vector-ref init-matrix 0)]
+                 [y (vector-ref init-matrix 3)]
+                 [tx (vector-ref init-matrix 4)]
+                 [ty (vector-ref init-matrix 5)])
+            (send BITMAP-DC set-initial-matrix
+                  (vector (+ x 0.1) 0 0 (+ y 0.1) (- tx 25) (- ty 25)))
+            (send CANVAS on-paint))))))
         
           
-  ;; Dezoom du graphique
-  (define DEZOOM-GRAPH-BUTTON
-    (new button%
-         (label dezoom) 
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
-                   [x (vector-ref init-matrix 0)]
-                   [y (vector-ref init-matrix 3)]
-                   [tx (vector-ref init-matrix 4)]
-                   [ty (vector-ref init-matrix 5)])
-              (send BITMAP-DC set-initial-matrix
-                    (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25)))
-              (send CANVAS on-paint))))))
+;; Dezoom du graphique
+(define DEZOOM-GRAPH-BUTTON
+  (new button%
+       (label dezoom) 
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (let* ([init-matrix (send BITMAP-DC get-initial-matrix)]
+                 [x (vector-ref init-matrix 0)]
+                 [y (vector-ref init-matrix 3)]
+                 [tx (vector-ref init-matrix 4)]
+                 [ty (vector-ref init-matrix 5)])
+            (send BITMAP-DC set-initial-matrix
+                  (vector (- x 0.1) 0 0 (- y 0.1) (+ tx 25) (+ ty 25)))
+            (send CANVAS on-paint))))))
                  
           
 
-  ;; Ralentissement du temps de l'animation
-  (define RALENTI-GRAPH-BUTTON
-    (new button%
-         (label slow)
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (send TIMER start (inexact->exact (round (* (send TIMER interval) 1.5))))))))
+;; Ralentissement du temps de l'animation
+(define RALENTI-GRAPH-BUTTON
+  (new button%
+       (label slow)
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (send TIMER start (inexact->exact (round (* (send TIMER interval) 1.5))))))))
 
-  ;; Acceleration du temps de l'animation
-  (define ACCELERATION-GRAPH-BUTTON
-    (new button%
-         (label accelerer)
-         (parent hpanel2)
-         (style '(border))
-         (callback
-          (lambda (obj evt) 
-            (send TIMER start (inexact->exact (+ (round (* (send TIMER interval) 0.5)) 1)))))))
+;; Acceleration du temps de l'animation
+(define ACCELERATION-GRAPH-BUTTON
+  (new button%
+       (label accelerer)
+       (parent hpanel2)
+       (style '(border))
+       (callback
+        (lambda (obj evt) 
+          (send TIMER start (inexact->exact (+ (round (* (send TIMER interval) 0.5)) 1)))))))
 
-  ;; Champ de texte c1
-  (define C1-MODIFICATION-TEXTFIELD
-    (new text-field%
-         (label "C1")
-         (parent FRAME)
-         (init-value (number->string(r 'get-c1)))))
+;; Champ de texte c1
+(define C1-MODIFICATION-TEXTFIELD
+  (new text-field%
+       (label "C1")
+       (parent FRAME)
+       (init-value (number->string(r 'get-c1)))))
 
-  ;; Champ de texte c1
-  (define C2-MODIFICATION-TEXTFIELD
-    (new text-field%
-         (label "C2")
-         (parent FRAME)
-         (init-value (number->string(r 'get-c2)))))
+;; Champ de texte c1
+(define C2-MODIFICATION-TEXTFIELD
+  (new text-field%
+       (label "C2")
+       (parent FRAME)
+       (init-value (number->string(r 'get-c2)))))
 
-  ;; Champ de texte c1
-  (define C3-MODIFICATION-TEXTFIELD
-    (new text-field%
-         (label "C3")
-         (parent FRAME)
-         (init-value (number->string(r 'get-c3)))))
+;; Champ de texte c1
+(define C3-MODIFICATION-TEXTFIELD
+  (new text-field%
+       (label "C3")
+       (parent FRAME)
+       (init-value (number->string(r 'get-c3)))))
        
-  ;; Application des modification des constantes c1, c2 et c3
-  (define MODIFICATION-CONSTANTES-BUTTON
-    (new button%
-         (label "Appliquer")
-         (parent FRAME)
+;; Application des modification des constantes c1, c2 et c3
+(define MODIFICATION-CONSTANTES-BUTTON
+  (new button%
+       (label "Appliquer")
+       (parent FRAME)
        
-         (style '(border))
-         (callback
-          (lambda (obj evt)
-            (let ([c1 (string->number (send C1-MODIFICATION-TEXTFIELD get-value))]
-                  [c2 (string->number (send C2-MODIFICATION-TEXTFIELD get-value))]
-                  [c3 (string->number (send C3-MODIFICATION-TEXTFIELD get-value))])
-              (begin
-                (r 'set-c1 c1)
-                (r 'set-c2 c2)
-                (r 'set-c3 c3)))))))
+       (style '(border))
+       (callback
+        (lambda (obj evt)
+          (let ([c1 (string->number (send C1-MODIFICATION-TEXTFIELD get-value))]
+                [c2 (string->number (send C2-MODIFICATION-TEXTFIELD get-value))]
+                [c3 (string->number (send C3-MODIFICATION-TEXTFIELD get-value))])
+            (begin
+              (r 'set-c1 c1)
+              (r 'set-c2 c2)
+              (r 'set-c3 c3)))))))
 
 
-  (send START-DIALOG show #t)
+(send START-DIALOG show #t)
