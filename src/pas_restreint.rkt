@@ -54,18 +54,15 @@
        (parent HPANEL)
        ))
 
-;Ecart minimum trouvé : 16,55
+; Ecart minimum trouvé : 13,55%
+; Ce pourcentage peut varier à cause du positionement aleatoires initiales des sommets.
 ;(r 'set-c3 1)
 ;(r 'set-c1 2.8)
 ;(r 'set-c2 0)
-;(r 'set-c4 0.001)
+;(r 'set-c4 0.01)
 
-(r 'set-c3 400)
-(r 'set-c1 2)
-(r 'set-c2 20)
-(r 'set-c4 0.1)
 
-;; Boucle 
+;; N = 10000 
 (for ([i 10000])
   (r 'relax g e))
   
