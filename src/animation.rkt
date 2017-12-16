@@ -230,7 +230,7 @@
               [(equal? type-graph "Grid") (set! g (grid-graph nombre-sommets nombre-aretes))]
               [(equal? type-graph "Clique") (set! g (clique-graph nombre-sommets))]
               [(equal? type-graph "") (set! g (sommet-graph nombre-sommets))]
-              [else (printf "Valeur: ~a" type-graph)]) ;; Todo: Faire en sorte de retourner erreur
+              [else (printf "Valeur: ~a" type-graph)]) 
             (when (equal? (hash-count g) 0)
               (send SUPPRESSION-SOMMET-BUTTON enable #f)
               (send AJOUTER-ARETE-BUTTON enable #f)
@@ -371,7 +371,7 @@
   (let ([Sommet empty]
         [SommetAleatoire empty]
         [Filter empty]                                  
-        [voisin 0])   ;; TODO: Faire un filter pour voir si le sommet n'a pas déjà tous les sommets comme voisin
+        [voisin 0])   
     (new button%
          (label arrete)
          (parent hpanel2)
@@ -404,7 +404,6 @@
           (lambda (obj evt)
             (set! Filter (filter (lambda (x) (not (equal? (mutable-set) (hash-ref g x)))) (hash-keys g)))
             (when (not (equal? Filter empty))
-                 ;tester si il y a au moins un sommet qui a un voisin
               (set! SommetAleatoire (random-ref  Filter))
               (set! ArreteAleatoire (random-ref (set->list (hash-ref g SommetAleatoire))))
               (rm-edge! g SommetAleatoire ArreteAleatoire)
@@ -423,7 +422,7 @@
 
   (define ZOOM-GRAPH-BUTTON
     (new button%
-         (label zoom) ;; TODO: Remplacer par icone
+         (label zoom)
          (parent hpanel2)
          (style '(border))
          (callback
@@ -441,7 +440,7 @@
   ;; Dezoom du graphique
   (define DEZOOM-GRAPH-BUTTON
     (new button%
-         (label dezoom) ;; TODO: Remplacer par icone
+         (label dezoom) 
          (parent hpanel2)
          (style '(border))
          (callback
@@ -460,7 +459,7 @@
   ;; Ralentissement du temps de l'animation
   (define RALENTI-GRAPH-BUTTON
     (new button%
-         (label slow) ;; TODO: Remplacer par icone
+         (label slow)
          (parent hpanel2)
          (style '(border))
          (callback
@@ -470,7 +469,7 @@
   ;; Acceleration du temps de l'animation
   (define ACCELERATION-GRAPH-BUTTON
     (new button%
-         (label accelerer) ;; TODO: Remplacer par icone
+         (label accelerer)
          (parent hpanel2)
          (style '(border))
          (callback
